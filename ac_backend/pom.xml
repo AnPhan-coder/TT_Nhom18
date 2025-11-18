@@ -8,11 +8,11 @@
 		<version>3.5.7</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.ac</groupId>
-	<artifactId>demo</artifactId>
+	<groupId>vn.edu.stu</groupId>
+	<artifactId>AnCinema</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>An Cinema</name>
-	<description>Đặt vé xem phim tại web An Cinema</description>
+	<name>AnCinema</name>
+	<description>Website An Cinema dùng để đặt vé xem phim trực tuyến</description>
 	<url/>
 	<licenses>
 		<license/>

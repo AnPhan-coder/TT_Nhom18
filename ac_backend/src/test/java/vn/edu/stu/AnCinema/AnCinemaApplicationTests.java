@@ -1,4 +1,4 @@
-package com.ac;
+package vn.edu.stu.AnCinema;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
