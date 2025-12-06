@@ -1,68 +1,262 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@import "tailwindcss";
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500&family=Montserrat+Alternates:wght@600&display=swap");
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@theme {
+  --font-display: "Montserrat Alternates", sans-serif;
+  --font-body: "Be Vietnam Pro", sans-serif;
+  --color-neutral-850: #1f1f1f;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+@layer base {
+  body {
+    @apply bg-neutral-900 text-neutral-400 font-body antialiased;
+    padding: 0 ;
+    margin: 0 ;
   }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-semibold text-neutral-200;
   }
 }
+
+@layer components {
+  /* --- Header --- */
+  .header {
+    @apply fixed top-0 left-0 w-full h-20 z-50 bg-neutral-900 border-b border-neutral-700 flex items-center;
+  }
+  .container {
+    @apply max-w-7xl mx-auto px-4 w-full;
+  }
+  .header-container {
+    @apply flex justify-between items-center h-full;
+  }
+  .logo a {
+    @apply text-2xl font-display text-neutral-200 no-underline tracking-tight;
+  }
+  .logo span {
+    @apply text-yellow-500;
+  }
+  .nav-menu {
+    @apply flex gap-8;
+  }
+  .nav-link {
+    @apply text-sm font-medium text-neutral-400 no-underline transition-colors duration-200 uppercase tracking-wide;
+  }
+  .nav-link:hover, .nav-link.active {
+    @apply text-yellow-500;
+  }
+  .header-actions {
+    @apply flex items-center gap-4;
+  }
+  .search-box {
+    @apply flex items-center bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 w-64 focus-within:border-yellow-500 transition-colors;
+  }
+  .search-box input {
+    @apply bg-transparent border-none outline-none text-neutral-200 text-sm w-full font-body;
+  }
+  .search-box button {
+    @apply bg-transparent border-none text-neutral-400 hover:text-yellow-500 cursor-pointer;
+  }
+  .btn-login {
+    @apply bg-yellow-500 text-neutral-900 text-sm font-semibold px-4 py-2 rounded-lg transition-transform hover:-translate-y-0.5;
+  }
+
+  /* --- HomePage --- */
+  .home-container {
+    @apply pt-24 pb-12 bg-neutral-900 min-h-screen;
+  }
+  .banner-section {
+    @apply mb-12 px-4;
+  }
+  .banner-content {
+    @apply relative h-[450px] rounded-xl overflow-hidden border border-neutral-700;
+  }
+  .banner-bg {
+    @apply absolute inset-0 bg-cover bg-center;
+    filter: grayscale(100%) brightness(0.4);
+  }
+  .banner-info {
+    @apply absolute bottom-8 left-8 z-10 text-left max-w-2xl;
+  }
+  .banner-title {
+    @apply text-4xl text-neutral-200 font-bold mb-4 uppercase tracking-tighter;
+  }
+  .section-header {
+    @apply flex items-center justify-between mb-6 px-4 border-b border-neutral-700 pb-4;
+  }
+  .section-title {
+    @apply text-xl text-neutral-200 uppercase tracking-wider m-0;
+  }
+
+  /* Movie Card  */
+  .movie-card {
+    @apply bg-neutral-800 border border-neutral-700 rounded-xl overflow-hidden transition-all duration-300 relative;
+  }
+  .movie-card:hover {
+    @apply border-yellow-500;
+  }
+  .card-poster {
+    @apply w-full h-[320px] object-cover opacity-80 transition-opacity;
+  }
+  .movie-card:hover .card-poster {
+    @apply opacity-100;
+  }
+  
+  .card-content {
+    @apply p-4 text-left;
+  }
+  .card-title {
+    @apply text-base text-neutral-200 font-semibold mb-1 truncate;
+  }
+  .card-genre {
+    @apply text-xs text-neutral-500 mb-4;
+  }
+  .btn-action {
+    @apply w-full py-3 rounded-lg font-medium text-sm transition-colors cursor-pointer border;
+  }
+  .btn-buy {
+    @apply bg-yellow-500 text-neutral-900 border-yellow-500 hover:bg-yellow-400;
+  }
+  .btn-upcoming {
+    @apply bg-transparent text-neutral-500 border-neutral-700 cursor-not-allowed;
+  }
+  .slick-prev:before, .slick-next:before {
+    @apply text-neutral-400 ;
+  }
+
+  /* --- LoginPage --- */
+  .login-container {
+    @apply min-h-screen flex items-center justify-center bg-neutral-900 pt-20;
+  }
+  .login-box {
+    @apply w-full max-w-md p-8 bg-neutral-800 border border-neutral-700 rounded-xl;
+  }
+  .login-box h2 {
+    @apply text-2xl text-center mb-8 uppercase text-neutral-200 tracking-wide;
+  }
+  .form-group {
+    @apply mb-6;
+  }
+  .form-group label {
+    @apply block mb-2 text-sm text-neutral-400;
+  }
+  .form-group input {
+    @apply w-full p-3 bg-neutral-900 border border-neutral-700 rounded-md text-neutral-200 text-sm focus:border-yellow-500 outline-none transition-colors;
+  }
+  .error-msg {
+    @apply bg-red-900/20 text-red-400 border border-red-900/50 p-3 rounded-md mb-4 text-sm text-center;
+  }
+
+  /* --- BookingPage --- */
+  .booking-container {
+    @apply min-h-screen bg-neutral-900 pt-28 pb-12 px-4 flex flex-col items-center;
+  }
+  .booking-container h2 {
+    @apply text-3xl mb-2 text-neutral-200 text-center;
+  }
+  .booking-container p {
+    @apply text-neutral-500 text-center mb-10 text-sm;
+  }
+  .screen {
+    @apply w-3/4 h-1 bg-yellow-500 mb-12 shadow-[0_0_20px_rgba(234,179,8,0.2)] mx-auto rounded-full;
+  }
+  .seat-grid {
+    @apply grid grid-cols-10 gap-3 mx-auto max-w-3xl;
+  }
+ .seat {
+    @apply w-10 h-10 bg-neutral-800 border border-neutral-600 rounded-md flex items-center justify-center text-xs text-neutral-400 cursor-pointer transition-all duration-200;
+  }
+  
+  /* Hiệu ứng Hover chung */
+  .seat:hover:not(.booked) {
+    @apply border-yellow-500 text-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.3)];
+    transform: scale(1.1);
+  }
+
+  /* Ghế Đang chọn (Ưu tiên cao nhất) */
+  .seat.selected {
+    @apply bg-yellow-500 text-neutral-900 border-yellow-500 font-bold;
+    box-shadow: 0 0 15px rgba(234, 179, 8, 0.6);
+  }
+
+  /* Ghế VIP (Viền đỏ, chữ đỏ) */
+  .seat.vip {
+    @apply border-red-500 text-red-500 font-semibold;
+  }
+  .seat.vip:hover:not(.booked):not(.selected) {
+    @apply bg-red-500/10; /* Hover nhẹ màu đỏ */
+  }
+
+  /* Ghế Đôi (Couple - Màu hồng) */
+  .seat.couple {
+    @apply border-pink-500 text-pink-500 font-semibold w-24;
+  }
+
+  /* Ghế Đã đặt (Xám xịt, không click được) */
+  .seat.booked {
+    @apply bg-neutral-700 border-neutral-700 text-neutral-600 cursor-not-allowed;
+  }
+  .btn-confirm {
+    @apply mt-12 px-12 py-4 bg-yellow-500 text-neutral-900 font-bold text-lg rounded-lg hover:bg-yellow-400 transition-colors;
+  }
+
+  /* --- Footer --- */
+  .footer {
+    @apply bg-neutral-900 border-t border-neutral-700 pt-12 pb-6 mt-auto text-neutral-400;
+  }
+  .footer-content {
+    @apply grid grid-cols-1 md:grid-cols-4 gap-8 max-w-7xl mx-auto px-4 mb-8;
+  }
+  .footer-col h3 {
+    @apply text-lg text-neutral-200 font-semibold mb-4 uppercase;
+  }
+  .footer-col h3 span {
+    @apply text-yellow-500;
+  }
+  .footer-col h4 {
+    @apply text-sm text-neutral-200 font-bold mb-4 uppercase tracking-wider relative;
+  }
+  .footer-col h4::after {
+    @apply content-[''] absolute left-0 -bottom-2 w-8 h-0.5 bg-yellow-500;
+  }
+  .footer-col ul li a {
+    @apply text-sm text-neutral-500 hover:text-yellow-500 transition-colors;
+  }
+  .social-links {
+    @apply flex gap-4;
+  }
+  .social-links a {
+    @apply text-neutral-500 hover:text-yellow-500 transition-colors text-xl;
+  }
+  .footer-bottom {
+    @apply border-t border-neutral-800 pt-6 text-center text-xs text-neutral-600;
+  }
+
+  /* --- MovieDetail --- */
+  .detail-container {
+    @apply min-h-screen bg-neutral-900 pt-28 pb-12 px-4;
+  }
+  .page-title {
+    @apply text-3xl font-bold text-neutral-200 mb-12 text-center uppercase tracking-wider;
+  }
+  .showtime-list {
+    @apply flex flex-wrap gap-4 justify-center max-w-5xl mx-auto;
+  }
+  .btn-showtime {
+    @apply min-w-[140px] p-4 bg-neutral-800 border border-neutral-700 rounded-xl text-neutral-300 cursor-pointer transition-all duration-200 flex flex-col items-center justify-center gap-2;
+  }
+  .btn-showtime:hover {
+    @apply border-yellow-500 bg-neutral-800 text-yellow-500;
+    transform: translateY(-4px);
+  }
+  .room-name {
+    @apply text-xs text-neutral-500 uppercase tracking-widest;
+  }
+  .no-schedule {
+    @apply text-neutral-600 italic text-lg;
+  }
+}
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #171717; }
+::-webkit-scrollbar-thumb { background: #404040; border-radius: 999px; }

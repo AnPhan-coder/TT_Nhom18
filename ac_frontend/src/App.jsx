@@ -1,35 +1,50 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+
+import HomePage from './components/pages/HomePage';
+import LoginPage from './components/pages/LoginPage';
+import MovieDetail from './components/pages/MovieDetail'; 
+import BookingPage from './components/pages/BookingPage';
+import ScrollToTop from './components/pages/ScrollToTop';
+import RegisterPage from './components/pages/RegisterPage';
+import ForgotPasswordPage from './components/pages/ForgotPasswordPage';
+import AdminRoute from './components/pages/AdminRoute';
+import AdminDashboard from './components/pages/AdminDashboard';
+import PaymentPage from './components/pages/PaymentPage';
+import ProfilePage from './components/pages/ProfilePage';
+
+import Header from './components/Header/Header';
+import Footer from './components/Footer/Footer';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <Router>
+      <ScrollToTop />
+      <div className="App min-h-screen flex flex-col font-body">
+        <Header />
+        
+        <main className="flex-grow">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/movie/:id" element={<MovieDetail />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            
+            <Route path="/booking/:showtimeId" element={<BookingPage />} />
+            <Route path="/payment/:bookingId" element={<PaymentPage />} />
+
+            <Route element={<AdminRoute />}>
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            </Route>
+          </Routes>
+        </main>
+        
+        <Footer />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </Router>
+  );
 }
 
-export default App
+export default App;

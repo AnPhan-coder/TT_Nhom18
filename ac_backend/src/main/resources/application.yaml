@@ -1,3 +1,42 @@
 spring:
-  application:
-    name: AnCinema
+  datasource:
+    url: jdbc:mysql://localhost:3306/dat_ve_xem_phim
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: anphan19962004@gmail.com
+    password: xeiqdckbixvowpzz
+    properties:
+      mail:
+        debug: true
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          localhost: 127.0.0.1
+          connection timeout: 5000
+          timeout: 5000
+          write timeout: 5000
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 1029280040978-l8p4pfknj46hdb4dl113mjbecsb1gf1j.apps.googleusercontent.com
+            client-secret: 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
+server:
+  port: 8080
+jwt:
+  signerKey: "50da0747a041f8350431dcfef529e84e032e92c3909695e446b27e10e4ebb781"
