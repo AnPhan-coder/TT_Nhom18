@@ -20,7 +20,6 @@ import vn.edu.stu.AnCinema.dto.response.AuthResponse;
 @CrossOrigin(origins = "http://localhost:5173") // react goi vao
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthController {
-    @Autowired
     AuthService authService;
 
     @PostMapping("/login")

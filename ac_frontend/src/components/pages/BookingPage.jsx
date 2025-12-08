@@ -78,9 +78,9 @@ const BookingPage = () => {
 
     setSelectedSeats((prev) => {
       if (prev.includes(seat.id)) {
-        return prev.filter((id) => id !== seat.id); // Bỏ chọn
+        return prev.filter((id) => id !== seat.id); 
       }
-      return [...prev, seat.id]; // Chọn thêm
+      return [...prev, seat.id]; 
     });
   };
 

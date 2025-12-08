@@ -22,7 +22,6 @@ public class Movies {
     String title;
     String description;
     Integer duration;
-    String genre;
     String director;
 
     @Column(name = "trailer_url")
