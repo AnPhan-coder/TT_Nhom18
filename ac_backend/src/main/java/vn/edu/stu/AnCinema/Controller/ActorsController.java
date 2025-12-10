@@ -5,9 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Repository;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import vn.edu.stu.AnCinema.Entity.Actors;
 import vn.edu.stu.AnCinema.Repository.ActorsRepository;
 
@@ -23,5 +21,10 @@ public class ActorsController {
     @GetMapping
     public List<Actors> getAllActors() {
         return actorsRepository.findAll();
+    }
+
+    @PostMapping
+    public Actors createActors(@RequestBody Actors actors) {
+        return actorsRepository.save(actors);
     }
 }
