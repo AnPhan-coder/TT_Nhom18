@@ -18,6 +18,11 @@ public class Rooms {
 
     String name;
 
+    @Column(name = "total_rows")
+    Integer totalRows;
+
+    @Column(name = "total_cols")
+    Integer totalCols;
     @ManyToOne
     @JoinColumn(name = "cinema_id")
     Cinemas cinema;
