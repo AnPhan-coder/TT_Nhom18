@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import ManageShowtimes from "./ManageShowtimes";
 import MovieList from "./MovieList";
+import ManageRooms from "./ManageRooms";
+
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("movies");
   const renderContent = () => {
@@ -9,6 +11,8 @@ const AdminDashboard = () => {
         return <MovieList />;
       case "showtimes":
         return <ManageShowtimes />;
+      case "rooms":
+        return <ManageRooms />;
       case "stats":
         return (
           <div className="text-white">
@@ -32,11 +36,41 @@ const AdminDashboard = () => {
         <div className="lg:col-span-1 bg-neutral-800 p-6 rounded-lg h-fit">
           <h3 className="text-xl text-yellow-500 font-bold mb-4">Menu</h3>
           <ul className="space-y-2 text-neutral-400">
-            <li className="p-2 bg-neutral-700 text-white rounded cursor-pointer">
-              Quản lý Phim
+            <li className="p-2 hover:bg-neutral-700 rounded cursor-pointer">
+              <button
+                onClick={() => setActiveTab("movies")}
+                className={`px-4 py-2 rounded font-bold ${
+                  activeTab === "movies"
+                    ? "bg-neutral-600 text-white"
+                    : "text-neutral-400 hover:bg-neutral-700"
+                }`}
+              >
+                Quản lý Phim
+              </button>
             </li>
             <li className="p-2 hover:bg-neutral-700 rounded cursor-pointer">
-              Quản lý Lịch chiếu
+              <button
+                onClick={() => setActiveTab("showtimes")}
+                className={`px-4 py-2 rounded font-bold ${
+                  activeTab === "showtimes"
+                    ? "bg-neutral-600 text-white"
+                    : "text-neutral-400 hover:bg-neutral-700"
+                }`}
+              >
+                Quản lý Lịch chiếu
+              </button>
+            </li>
+            <li className="p-2 hover:bg-neutral-700 rounded cursor-pointer">
+              <button
+                onClick={() => setActiveTab("rooms")}
+                className={`px-4 py-2 rounded font-bold ${
+                  activeTab === "rooms"
+                    ? "bg-neutral-600 text-white"
+                    : "text-neutral-400 hover:bg-neutral-700"
+                }`}
+              >
+                Quản lý Phòng Chiếu
+              </button>
             </li>
             <li className="p-2 hover:bg-neutral-700 rounded cursor-pointer">
               Thống kê

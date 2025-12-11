@@ -6,6 +6,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.stu.AnCinema.Entity.Seats;
 import vn.edu.stu.AnCinema.Repository.SeatsRepository;
+import vn.edu.stu.AnCinema.dto.response.ApiResponse;
 
 import java.util.List;
 
@@ -18,8 +19,28 @@ public class SeatsController {
     SeatsRepository seatsRepository;
 
     @GetMapping
-    public List<Seats> getSeatsByRoom(@RequestParam Integer roomId) {
-        return seatsRepository.findByRoomId(roomId);
+    public ApiResponse<List<Seats>> getSeatsByRoom(@RequestParam Integer roomId) {
+        return ApiResponse.<List<Seats>>builder()
+                .result(seatsRepository.findByRoomId(roomId))
+                .build();
     }
+    @PutMapping("/{id}")
+    public ApiResponse<Seats> updateSeat(@PathVariable Integer id, @RequestBody Seats request) {
+        Seats seat = seatsRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Ghế không tồn tại"));
 
+        seat.setType(request.getType());
+
+        return ApiResponse.<Seats>builder()
+                .result(seatsRepository.save(seat))
+                .message("Cập nhật ghế thành công")
+                .build();
+    }
+    @DeleteMapping("/{id}")
+    public ApiResponse<String> deleteSeat(@PathVariable Integer id){
+        seatsRepository.deleteById(id);
+        return ApiResponse.<String>builder()
+                .message("Đã xóa ghế")
+                .build();
+    }
 }
