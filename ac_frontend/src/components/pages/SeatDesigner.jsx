@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
+
 const SeatIcon = ({ type, isSelected, isHidden, label }) => {
   if (isHidden) {
     return (
@@ -94,7 +95,30 @@ const SeatDesigner = ({ room, onBack }) => {
     setSeats(newSeats);
     setIsDirty(true);
   };
+  const handleRowClick = (rowIdx) => {
+    const firstSeatInRow = seats.find(s => s.rowIndex === rowIdx);
+      const isRowActive = firstSeatInRow ? firstSeatInRow.active : false;
+      const newSeats = seats.map(seat => {
+          if (seat.rowIndex !== rowIdx) return seat;
 
+          if (selectedTool === "TOGGLE") {
+              return { ...seat, active: !isRowActive };
+          } 
+          
+          if (selectedTool === "COUPLE") {
+              if (seat.colIndex % 2 !== 0 && seat.colIndex < room.totalCols) {
+                   return { ...seat, type: "COUPLE", active: true };
+              } else if (seat.colIndex % 2 === 0) {
+                   return { ...seat, active: false }; 
+              }
+              return { ...seat, type: "NORMAL", active: true };
+          }
+          return { ...seat, type: selectedTool, active: true };
+      });
+
+      setSeats(newSeats);
+      setIsDirty(true);
+  };
   const handleSave = async () => {  
     Swal.fire({
       title: "Lưu thay đổi?",
@@ -112,7 +136,6 @@ const SeatDesigner = ({ room, onBack }) => {
           try {
             await axios.post("http://localhost:8080/api/seats/batch-update", seats);
             
-            // Toast thông báo nhẹ nhàng góc màn hình
             toast.success("✅ Đã lưu sơ đồ thành công!");
             setIsDirty(false);
         } catch (error) {
@@ -147,12 +170,20 @@ const SeatDesigner = ({ room, onBack }) => {
                 </div>
             );
         }
-        
+        const RowLabelButton = () => (
+            <button 
+                onClick={() => handleRowClick(r)}
+                className="w-10 h-10 flex items-center justify-center font-bold text-neutral-500 hover:text-white hover:bg-neutral-800 rounded transition-colors text-lg"
+                title={`Click để set cả hàng ${rowLabel} thành ${selectedTool}`}
+            >
+                {rowLabel}
+            </button>
+        );
         grid.push(
-            <div key={r} className="flex justify-center items-end whitespace-nowrap">
-                <span className="w-8 text-right pr-4 font-bold text-neutral-500 text-lg">{rowLabel}</span>
+            <div key={r} className="flex justify-center items-end whitespace-nowrap group/row">
+                <div className="pr-4"><RowLabelButton /></div>
                 {rowCells}
-                <span className="w-8 text-left pl-4 font-bold text-neutral-500 text-lg">{rowLabel}</span>
+                <div className="pl-4"><RowLabelButton /></div>
             </div>
         );
     }
