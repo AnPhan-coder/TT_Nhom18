@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axiosClient from "../../api/axiosClient"; 
 import axios from "axios";
+import { toast } from "react-toastify";
 
 const ManageShowtimes = () => {
   const [movies, setMovies] = useState([]);
@@ -29,7 +30,7 @@ const ManageShowtimes = () => {
         if(resRooms.data.result) setRooms(resRooms.data.result);
       } catch (error) {
         console.error("Lỗi tải dữ liệu nguồn:", error);
-        alert("Không thể tải danh sách phim hoặc phòng chiếu.");
+        toast.error("Không thể tải danh sách phim/phòng.");
       }
     };
     fetchData();
@@ -43,7 +44,7 @@ const ManageShowtimes = () => {
     e.preventDefault();
     
     if (!formData.movieId || !formData.roomId || !formData.startTime) {
-      alert("Vui lòng điền đầy đủ thông tin!");
+      toast.warning("Vui lòng điền đầy đủ thông tin!");
       return;
     }
 
@@ -57,16 +58,15 @@ const ManageShowtimes = () => {
       });
 
       if (response.data.code === 1000 || response.data.result) {
-        alert("✅ Tạo lịch chiếu thành công!");
-        // Reset form
+        toast.success("✅ Tạo lịch chiếu thành công!");
         setFormData({ ...formData, startTime: "" });
       } else {
-        alert("❌ Lỗi: " + response.data.message);
+        toast.error("❌ Lỗi: " + response.data.message);
       }
     } catch (error) {
       console.error("Lỗi submit:", error);
       const msg = error.response?.data?.message || "Lỗi Server hoặc Trùng lịch!";
-      alert("❌ Thất bại: " + msg);
+      toast.error("❌ Thất bại: " + msg);
     } finally {
       setLoading(false);
     }

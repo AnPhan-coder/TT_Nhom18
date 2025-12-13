@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
-
+import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -9,7 +10,6 @@ const RegisterPage = () => {
     password: "",
     confirmPassword: ""
   });
-  const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -21,10 +21,9 @@ const RegisterPage = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    setErrorMsg("");
 
     if (formData.password !== formData.confirmPassword) {
-      setErrorMsg("Mật khẩu nhập lại không khớp!");
+      toast.warning("Mật khẩu nhập lại không khớp!");
       return;
     }
 
@@ -36,17 +35,26 @@ const RegisterPage = () => {
       });
 
       if (response.data.code === 1000) {
-        alert("Đăng ký thành công! Vui lòng đăng nhập.");
-        navigate("/login");
+        Swal.fire({
+            title: "Đăng ký thành công!",
+            text: "Tài khoản đã được tạo. Vui lòng đăng nhập.",
+            icon: "success",
+            background: "#171717",
+            color: "#fff",
+            confirmButtonColor: "#EAB308",
+            confirmButtonText: "Đăng nhập ngay"
+        }).then(() => {
+            navigate("/login");
+        });
       } else {
-        setErrorMsg(response.data.message || "Đăng ký thất bại");
+        toast.error(response.data.message || "Đăng ký thất bại"); // Thay setErrorMsg
       }
     } catch (error) {
       console.error("Lỗi đăng ký:", error);
       if (error.response && error.response.data) {
-        setErrorMsg(error.response.data.message || "Lỗi từ server");
+        toast.error(error.response.data.message || "Lỗi từ server");
       } else {
-        setErrorMsg("Không thể kết nối đến Server");
+        toast.error("Không thể kết nối đến Server");
       }
     }
   };
@@ -55,10 +63,7 @@ const RegisterPage = () => {
     <div className="login-container">
       <div className="login-box">
         <h2>Đăng Ký Tài Khoản</h2>
-        
-        {/* Sử dụng class error-msg đã có trong index.css */}
-        {errorMsg && <p className="error-msg">{errorMsg}</p>}
-        
+                
         <form onSubmit={handleRegister}>
           <div className="form-group">
             <label>Họ và tên:</label>
@@ -108,7 +113,6 @@ const RegisterPage = () => {
             />
           </div>
 
-          {/* Thêm w-full để nút full chiều ngang, mt-4 tạo khoảng cách */}
           <button type="submit" className="btn-login w-full font-bold mt-2">
             ĐĂNG KÝ
           </button>

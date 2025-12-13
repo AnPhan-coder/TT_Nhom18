@@ -24,7 +24,6 @@ const HomePage = () => {
       .catch((error) => console.error("Lỗi gọi API:", error));
   }, []);
 
-  // --- CẤU HÌNH SLIDER ---
 
   const bannerSettings = {
     dots: true,

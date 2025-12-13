@@ -46,18 +46,15 @@ public class JwtUtils {
         return extractClaim(token, Claims::getSubject);
     }
 
-    // 2. Lấy Role từ Token (Để phân quyền Admin)
     public String extractRole(String token) {
         return extractAllClaims(token).get("role", String.class);
     }
 
-    // 3. Kiểm tra Token có hết hạn không
     public boolean validateToken(String token, Users user) { // Hoặc so sánh với UserDetails
         final String username = extractUsername(token);
         return (username.equals(user.getEmail()) && !isTokenExpired(token));
     }
 
-    // Hàm phụ trợ
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);

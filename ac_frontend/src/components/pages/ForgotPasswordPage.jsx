@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
+import Swal from "sweetalert2";
 const ForgotPasswordPage = () => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false); 
@@ -50,8 +50,17 @@ const ForgotPasswordPage = () => {
         newPassword: newPassword
       });
 
-      alert("Đổi mật khẩu thành công! Vui lòng đăng nhập lại.");
-      navigate("/login");
+     Swal.fire({
+        title: "Thành công!",
+        text: "Mật khẩu đã được đổi. Vui lòng đăng nhập lại.",
+        icon: "success",
+        background: "#171717",
+        color: "#fff",
+        confirmButtonColor: "#EAB308",
+        confirmButtonText: "Đăng nhập ngay"
+      }).then(() => {
+        navigate("/login");
+      });
     } catch (error) {
       const errorText = error.response?.data?.message || "Lỗi đổi mật khẩu.";
       setMsg({ type: "error", content: errorText });

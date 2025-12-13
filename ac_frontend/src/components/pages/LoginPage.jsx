@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { GoogleLogin } from '@react-oauth/google';
-
+import { toast } from "react-toastify"; 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +28,7 @@ if (response.data.code === 1000) {
     
     const realId = data.userID; 
     if (!realId) {
-        alert("Lỗi nghiêm trọng: Backend không trả về ID người dùng!");
+        toast.error("Lỗi: Backend không trả về ID người dùng!");
         return;
     }
 
@@ -39,7 +39,7 @@ if (response.data.code === 1000) {
         role: data.role
     }));
     window.dispatchEvent(new Event("auth-change"));
-    alert("Đăng nhập thành công!");
+    toast.success(`👋 Chào mừng quay trở lại, ${data.name}!`);
     const role = data.role ? data.role.toUpperCase() : "CUSTOMER";
 
 if (role === "ADMIN") {
@@ -80,13 +80,13 @@ const handleGoogleSuccess = async (credentialResponse) => {
             name: data.name,
             role: data.role
         }));
-        alert("Đăng nhập Google thành công!");
+        toast.success("🌐 Đăng nhập Google thành công!");
         navigate("/");
         window.location.reload();
       }
     } catch (error) {
       console.error("Lỗi Google Login:", error);
-      setErrorMsg("Đăng nhập Google thất bại!");
+      toast.error("Đăng nhập Google thất bại!");
     }
   };
 
@@ -143,7 +143,7 @@ const handleGoogleSuccess = async (credentialResponse) => {
                 <GoogleLogin
                     onSuccess={handleGoogleSuccess}
                     onError={() => {
-                        setErrorMsg("Đăng nhập Google thất bại");
+                        toast.error("Đăng nhập Google thất bại");
                     }}
                     useOneTap
                     theme="filled_black" 

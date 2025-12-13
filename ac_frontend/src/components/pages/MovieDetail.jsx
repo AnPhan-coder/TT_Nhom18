@@ -20,7 +20,8 @@ const MovieDetail = () => {
           axios.get(`http://localhost:8080/api/showtimes/movie?movieId=${id}`),
         ]);
 
-setMovie(movieRes.data.result || movieRes.data);        setShowtimes(showtimeRes.data.result || showtimeRes.data || []);
+        setMovie(movieRes.data.result || movieRes.data);
+        setShowtimes(showtimeRes.data.result || showtimeRes.data || []);
       } catch (err) {
         console.error("Lỗi tải dữ liệu:", err);
       } finally {
@@ -41,17 +42,17 @@ setMovie(movieRes.data.result || movieRes.data);        setShowtimes(showtimeRes
   const groupShowtimesByDate = () => {
     const groups = {};
     if (Array.isArray(showtimes)) {
-        showtimes.forEach((show) => {
+      showtimes.forEach((show) => {
         if (!show.startTime) return;
 
         try {
-            const dateKey = format(new Date(show.startTime), "dd/MM/yyyy");
-            if (!groups[dateKey]) groups[dateKey] = [];
-            groups[dateKey].push(show);
+          const dateKey = format(new Date(show.startTime), "dd/MM/yyyy");
+          if (!groups[dateKey]) groups[dateKey] = [];
+          groups[dateKey].push(show);
         } catch (e) {
-            console.warn("Bỏ qua suất chiếu lỗi ngày:", show);
+          console.warn("Bỏ qua suất chiếu lỗi ngày:", show);
         }
-        });
+      });
     }
     return groups;
   };
@@ -78,9 +79,9 @@ setMovie(movieRes.data.result || movieRes.data);        setShowtimes(showtimeRes
               {movie.duration} phút
             </span>
             <span className="border border-neutral-600 px-2 py-1 rounded">
-              {movie.genres && movie.genres.length > 0 
-                  ? movie.genres.map(g => g.name).join(", ") 
-                  : "Chưa cập nhật"}
+              {movie.genres && movie.genres.length > 0
+                ? movie.genres.map((g) => g.name).join(", ")
+                : "Chưa cập nhật"}
             </span>
           </div>
 
@@ -90,15 +91,13 @@ setMovie(movieRes.data.result || movieRes.data);        setShowtimes(showtimeRes
 
           <div className="mb-6">
             <h3 className="text-white font-bold mb-2">Đạo diễn</h3>
-            <p className="text-sm">
-             {movie.director || "N/A"}
-            </p>
+            <p className="text-sm">{movie.director || "N/A"}</p>
           </div>
           <div>
             <h3 className="text-white font-bold mb-2">Diễn viên:</h3>
             <p className="text-sm">
               {movie.actors && movie.actors.length > 0
-                ? movie.actors.map(a => a.name).join(", ")
+                ? movie.actors.map((a) => a.name).join(", ")
                 : "Chưa cập nhật"}
             </p>
           </div>

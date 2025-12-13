@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import CreatableSelect from "react-select/creatable";
+import { toast } from "react-toastify";
 
 const MovieForm = ({ movieId, onBack }) => {
   const isEdit = !!movieId;
@@ -12,7 +13,7 @@ const MovieForm = ({ movieId, onBack }) => {
     director: "",
     trailerUrl: "",
     posterUrl: "",
-    status: "COMING_SOON",
+    status: "upcoming",
     genreIds: [],
     actorIds: [],
   });
@@ -88,7 +89,6 @@ const MovieForm = ({ movieId, onBack }) => {
       const newGenre = res.data;
       const newOption = { value: newGenre.id, label: newGenre.name };
 
-      // Cập nhật State: Thêm vào danh sách Options và danh sách Đang chọn
       setGenreOptions((prev) => [...prev, newOption]);
       setSelectedGenres((prev) => [...prev, newOption]);
       setFormData((prev) => ({
@@ -96,9 +96,9 @@ const MovieForm = ({ movieId, onBack }) => {
         genreIds: [...prev.genreIds, newGenre.id],
       }));
 
-      alert(`Đã thêm thể loại mới: ${newGenre.name}`);
+      toast.success(`✨ Đã thêm thể loại mới: ${newGenre.name}`);
     } catch (error) {
-      alert("Lỗi tạo thể loại");
+      toast.error("Lỗi tạo thể loại");
     } finally {
       setLoading(false);
     }
@@ -119,9 +119,9 @@ const MovieForm = ({ movieId, onBack }) => {
         actorIds: [...prev.actorIds, newActor.id],
       }));
 
-      alert(`Đã thêm diễn viên mới: ${newActor.name}`);
+      toast.success(`✨ Đã thêm diễn viên mới: ${newActor.name}`);
     } catch (error) {
-      alert("Lỗi tạo diễn viên");
+      toast.error("Lỗi tạo diễn viên");
     } finally {
       setLoading(false);
     }
@@ -150,15 +150,15 @@ const MovieForm = ({ movieId, onBack }) => {
           `http://localhost:8080/api/movies/${movieId}`,
           formData
         );
-        alert("Cập nhật phim thành công!");
+        toast.success("Cập nhật phim thành công!");
       } else {
         await axios.post("http://localhost:8080/api/movies", formData);
-        alert("Thêm phim mới thành công!");
+        toast.success("Thêm phim mới thành công!");
       }
       onBack();
     } catch (error) {
       console.error(error);
-      alert("Lỗi lưu phim: " + (error.response?.data?.message || "Lỗi server"));
+      toast.error("Lỗi lưu phim: " + (error.response?.data?.message || "Lỗi server"));
     }
   };
 
@@ -208,7 +208,6 @@ const MovieForm = ({ movieId, onBack }) => {
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-6"
       >
-        {/* Cột Trái */}
         <div className="space-y-4">
           <div>
             <label className="text-neutral-400 block mb-1">Tên Phim</label>
@@ -250,8 +249,8 @@ const MovieForm = ({ movieId, onBack }) => {
               onChange={handleChange}
               className="w-full bg-neutral-900 border border-neutral-600 p-2 rounded text-white focus:border-yellow-500 outline-none"
             >
-              <option value="active">Sắp Chiếu</option>
-              <option value="upcoming">Đang Chiếu</option>
+              <option value="upcoming">Sắp Chiếu</option>
+              <option value="active">Đang Chiếu</option>
               <option value="finished">Ngừng Chiếu</option>
             </select>
           </div>

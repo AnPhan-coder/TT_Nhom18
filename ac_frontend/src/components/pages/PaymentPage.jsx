@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
+import Swal from "sweetalert2"; 
+import { toast } from "react-toastify";
 
 const PaymentPage = () => {
   const { bookingId } = useParams();
@@ -8,21 +10,43 @@ const PaymentPage = () => {
   const [loading, setLoading] = useState(false);
   
   const handleConfirmPayment = async () => {
-    if (!window.confirm("Bạn xác nhận đã chuyển khoản theo đúng nội dung?")) return;
-    
-    setLoading(true);
-    try {
-      const response = await axiosClient.post(`/bookings/${bookingId}/pay`);
-      
-      if (response.data.code === 1000 || response.data.result) {
-        alert("✅ Thanh toán thành công! Cảm ơn bạn.");
-        navigate("/"); 
+    Swal.fire({
+      title: "Xác nhận đã chuyển khoản?",
+      text: "Hãy đảm bảo bạn đã chuyển đúng số tiền và nội dung ghi chú.",
+      icon: "question",
+      background: "#171717",
+      color: "#fff",
+      showCancelButton: true,
+      confirmButtonColor: "#16A34A", 
+      cancelButtonColor: "#404040", 
+      confirmButtonText: "Tôi đã chuyển tiền",
+      cancelButtonText: "Kiểm tra lại"
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        setLoading(true);
+        try {
+          const response = await axiosClient.post(`/bookings/${bookingId}/pay`);
+          
+          if (response.data.code === 1000 || response.data.result) {
+            Swal.fire({
+              title: "Thanh toán thành công!",
+              text: "Cảm ơn bạn đã sử dụng dịch vụ của AnCinema.",
+              icon: "success",
+              background: "#171717",
+              color: "#fff",
+              confirmButtonColor: "#EAB308",
+              confirmButtonText: "Về trang chủ"
+            }).then(() => {
+              navigate("/"); 
+            });
+          }
+        } catch (error) {
+          toast.error("Lỗi: " + (error.response?.data?.message || "Không thể xác nhận thanh toán"));
+        } finally {
+          setLoading(false);
+        }
       }
-    } catch (error) {
-      alert("Lỗi: " + (error.response?.data?.message || "Không thể xác nhận thanh toán"));
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   return (

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import MovieForm from "./MovieForm";
-
+import Swal from "sweetalert2"; 
+import { toast } from "react-toastify";
 const MovieList = () => {
   const [movies, setMovies] = useState([]);
   const [view, setView] = useState("list");
@@ -54,14 +55,28 @@ const MovieList = () => {
     });
   };
   const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa phim này?")) return;
-    try {
-      await axios.delete(`http://localhost:8080/api/movies/${id}`);
-      alert("Đã xóa phim thành công!");
-      loadMovies();
-    } catch (error) {
-      alert("Lỗi xóa phim: " + (error.response?.data?.message || "Lỗi server"));
-    }
+   Swal.fire({
+      title: "Xóa phim này?",
+      text: "Hành động này không thể hoàn tác!",
+      icon: "warning",
+      background: "#171717",
+      color: "#fff",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#404040",
+      confirmButtonText: "Xóa luôn",
+      cancelButtonText: "Hủy"
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axios.delete(`http://localhost:8080/api/movies/${id}`);
+          toast.success("✅ Đã xóa phim thành công!");
+          loadMovies();
+        } catch (error) {
+          toast.error("❌ Lỗi xóa phim: " + (error.response?.data?.message || "Lỗi server"));
+        }
+      }
+    });
   };
   const handleCreate = () => {
     setSelectedMovieId(null);
