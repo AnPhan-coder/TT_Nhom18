@@ -1,112 +1,158 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { toast } from "react-toastify";
+import Swal from "sweetalert2";
+const SeatIcon = ({ type, isSelected, isHidden, label }) => {
+  if (isHidden) {
+    return (
+      <div className="w-10 h-10 flex items-center justify-center opacity-20">
+        <div className="w-1 h-1 bg-white rounded-full"></div>
+      </div>
+    );
+  }
 
-const SeatDesigner = ({ room, onBack }) => { // Nhận cả object room
+  let fillColor = "#525252";
+  if (type === "VIP") fillColor = "#DC2626"; 
+  if (type === "COUPLE") fillColor = "#DB2777"; 
+  
+
+  const opacity = isSelected ? "opacity-100" : "opacity-100";
+  const hoverEffect = "group-hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-all";
+
+
+  if (type === "COUPLE") {
+    return (
+      <div className={`relative w-24 h-10 flex justify-center items-end cursor-pointer group ${opacity}`}>
+        <svg width="100%" height="100%" viewBox="0 0 100 45" fill="none" className={hoverEffect}>
+           <path d="M10 10 C 10 0, 90 0, 90 10 L 90 35 L 10 35 Z" fill={fillColor} />
+           <rect x="0" y="15" width="8" height="30" rx="4" fill={fillColor} className="brightness-110"/>
+           <rect x="92" y="15" width="8" height="30" rx="4" fill={fillColor} className="brightness-110"/>
+           <rect x="8" y="30" width="84" height="12" rx="2" fill={fillColor} className="brightness-90"/>
+        </svg>
+        <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white text-[10px] font-bold select-none pointer-events-none">
+          {label}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`relative w-10 h-10 flex justify-center items-end cursor-pointer group ${opacity}`}>
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className={hoverEffect}>
+         <path d="M5 10 C 5 0, 35 0, 35 10 L 35 30 L 5 30 Z" fill={fillColor} />
+         <rect x="0" y="15" width="6" height="22" rx="2" fill={fillColor} className="brightness-110"/>
+         <rect x="34" y="15" width="6" height="22" rx="2" fill={fillColor} className="brightness-110"/>
+         <rect x="5" y="26" width="30" height="10" rx="2" fill={fillColor} className="brightness-90"/>
+      </svg>
+      <span className="absolute top-2 left-1/2 transform -translate-x-1/2 text-white text-[10px] font-bold select-none pointer-events-none">
+          {label}
+      </span>
+    </div>
+  );
+};
+
+const SeatDesigner = ({ room, onBack }) => {
   const [seats, setSeats] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedTool, setSelectedTool] = useState("VIP"); 
+  const [isDirty, setIsDirty] = useState(false);
+  const [selectedTool, setSelectedTool] = useState("NORMAL");
 
   useEffect(() => {
-    if(room) loadSeats();
+    if (room) loadSeats();
   }, [room]);
 
   const loadSeats = async () => {
     try {
       const res = await axios.get(`http://localhost:8080/api/seats?roomId=${room.id}`);
-      setSeats(res.data.result || []);
-    } catch (error) {
-      console.error("Lỗi tải ghế:", error);
-    } finally {
-      setLoading(false);
-    }
+      const sortedSeats = res.data.result.sort((a, b) => 
+          a.rowIndex === b.rowIndex ? a.colIndex - b.colIndex : a.rowIndex - b.rowIndex
+      );
+      setSeats(sortedSeats || []);
+      setIsDirty(false);
+    } catch (error) { console.error(error); }
   };
 
-  // --- HÀM XỬ LÝ CLICK ---
-  const handleCellClick = async (r, c, existingSeat) => {
-    // 1. TOOL XÓA: Nếu có ghế -> Xóa đi
-    if (selectedTool === "DELETE") {
-        if (!existingSeat) return; // Đã là ô trống rồi thì thôi
-        if (!window.confirm(`Xóa ghế ${existingSeat.seatCode}?`)) return;
+  const handleCellClick = (r, c) => {
+    const seatIndex = seats.findIndex(s => s.rowIndex === r && s.colIndex === c);
+    if (seatIndex === -1) return;
 
-        try {
-            await axios.delete(`http://localhost:8080/api/seats/${existingSeat.id}`);
-            // Xóa khỏi state (ghế biến mất -> lộ ra ô xám)
-            setSeats(prev => prev.filter(s => s.id !== existingSeat.id));
-        } catch (err) { alert("Lỗi xóa ghế"); }
-        return;
-    }
+    const newSeats = [...seats];
+    const seat = newSeats[seatIndex];
 
-    // 2. CÁC TOOL KHÁC (VIP/NORMAL/COUPLE)
-    if (existingSeat) {
-        // Nếu ghế ĐANG TỒN TẠI -> Update loại
-        if (existingSeat.type === selectedTool) return;
-        try {
-            await axios.put(`http://localhost:8080/api/seats/${existingSeat.id}`, { type: selectedTool });
-            setSeats(prev => prev.map(s => s.id === existingSeat.id ? { ...s, type: selectedTool } : s));
-        } catch (err) { alert("Lỗi update ghế"); }
+    if (selectedTool === "TOGGLE") {
+        seat.active = !seat.active; 
+    } else if (selectedTool === "COUPLE") {
+        if (c % 2 !== 0 && c < room.totalCols) {
+            seat.type = "COUPLE";
+            seat.active = true;
+            const nextSeat = newSeats.find(s => s.rowIndex === r && s.colIndex === c + 1);
+            if (nextSeat) nextSeat.active = false;
+        }
     } else {
-        // Nếu là Ô TRỐNG -> Tạo lại ghế (Khôi phục ghế đã xóa)
-        try {
-            const rowChar = String.fromCharCode(64 + r); // 1->A
-            const seatCode = `${rowChar}${c}`;
-            const payload = {
-                seatCode: seatCode,
-                rowIndex: r,
-                colIndex: c,
-                type: selectedTool,
-                roomId: room.id // Cần backend hỗ trợ nhận roomId trong body hoặc URL
-            };
-            
-            // Cần 1 API tạo ghế lẻ (nếu chưa có thì phải thêm ở Backend)
-            // Tạm thời alert nếu chưa có API này
-            alert("Tính năng khôi phục ghế đang phát triển (Cần thêm API createSeat)");
-            // Nếu bạn muốn làm luôn: await axios.post("/api/seats", payload)...
-        } catch (err) { alert("Lỗi tạo ghế"); }
+        seat.type = selectedTool;
+        seat.active = true;
     }
+    setSeats(newSeats);
+    setIsDirty(true);
   };
 
-  const getSeatColor = (seat) => {
-      if (!seat) return 'bg-neutral-800/50 border-dashed border-neutral-700 text-neutral-700'; // Ô trống (Đã xóa)
-      
-      switch(seat.type) {
-          case 'VIP': return 'bg-red-600 border-red-500 text-white shadow-lg shadow-red-900/50';
-          case 'COUPLE': return 'bg-pink-600 border-pink-500 text-white w-20 shadow-lg shadow-pink-900/50';
-          default: return 'bg-neutral-700 border-neutral-500 text-neutral-300'; // NORMAL
+  const handleSave = async () => {  
+    Swal.fire({
+      title: "Lưu thay đổi?",
+      text: "Cập nhật sơ đồ ghế mới cho hệ thống bán vé.",
+      icon: "question",
+      background: "#171717",
+      color: "#fff",
+      showCancelButton: true,
+      confirmButtonColor: "#EAB308",
+      cancelButtonColor: "#404040",
+      confirmButtonText: "Lưu ngay",
+      cancelButtonText: "Hủy"
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+          try {
+            await axios.post("http://localhost:8080/api/seats/batch-update", seats);
+            
+            // Toast thông báo nhẹ nhàng góc màn hình
+            toast.success("✅ Đã lưu sơ đồ thành công!");
+            setIsDirty(false);
+        } catch (error) {
+            toast.error("❌ Lỗi: " + error.message);
+        }
       }
+    });
   };
 
-  // --- TẠO LƯỚI TĨNH DỰA TRÊN KÍCH THƯỚC PHÒNG ---
   const renderGrid = () => {
     const grid = [];
     for (let r = 1; r <= room.totalRows; r++) {
         const rowCells = [];
-        const rowLabel = String.fromCharCode(64 + r); // A, B, C...
+        const rowLabel = String.fromCharCode(64 + r);
 
         for (let c = 1; c <= room.totalCols; c++) {
-            // Tìm xem có ghế nào ở vị trí (r, c) không
             const seat = seats.find(s => s.rowIndex === r && s.colIndex === c);
             
+            if (seat) {
+                 const prevSeat = seats.find(s => s.rowIndex === r && s.colIndex === c - 1);
+                 if (prevSeat && prevSeat.type === "COUPLE" && prevSeat.active) continue;
+            }
+
             rowCells.push(
-                <div 
-                    key={`${r}-${c}`}
-                    onClick={() => handleCellClick(r, c, seat)}
-                    className={`
-                        h-9 w-9 flex items-center justify-center rounded cursor-pointer transition-all select-none text-xs border
-                        ${getSeatColor(seat)}
-                        ${selectedTool === 'DELETE' && seat ? 'hover:bg-red-900 hover:border-red-500' : 'hover:brightness-110'}
-                    `}
-                    title={seat ? `${seat.seatCode} (${seat.type})` : `Ô trống (R${r}-C${c})`}
-                >
-                    {seat ? seat.seatCode.substring(1) : ""} 
+                <div key={`${r}-${c}`} onClick={() => seat && handleCellClick(r, c)} className="m-1">
+                   <SeatIcon 
+                      type={seat?.type || "NORMAL"} 
+                      isHidden={!seat?.active} 
+                      isSelected={selectedTool !== 'TOGGLE'}
+                      label={seat && seat.seatCode ? seat.seatCode.substring(1) : ""}
+                   />
                 </div>
             );
         }
         
-        // Đẩy cả hàng vào grid
         grid.push(
-            <div key={r} className="flex gap-2 items-center justify-center">
-                <span className="w-6 text-center font-bold text-neutral-500">{rowLabel}</span>
+            <div key={r} className="flex justify-center items-end whitespace-nowrap">
+                <span className="w-8 text-right pr-4 font-bold text-neutral-500 text-lg">{rowLabel}</span>
                 {rowCells}
+                <span className="w-8 text-left pl-4 font-bold text-neutral-500 text-lg">{rowLabel}</span>
             </div>
         );
     }
@@ -114,35 +160,64 @@ const SeatDesigner = ({ room, onBack }) => { // Nhận cả object room
   };
 
   return (
-    <div className="bg-neutral-900 min-h-screen text-white p-6">
-      {/* HEADER (Giữ nguyên) */}
-      <div className="flex justify-between items-center mb-8 sticky top-0 bg-neutral-900 z-10 py-4 border-b border-neutral-800">
-        <div>
-            <button onClick={onBack} className="text-neutral-400 hover:text-white mb-2">← Quay lại danh sách</button>
-            <h2 className="text-2xl font-bold text-yellow-500">Thiết Kế: {room.name}</h2>
-            <p className="text-sm text-neutral-500">Kích thước: {room.totalRows} hàng x {room.totalCols} cột</p>
+    <div className="flex flex-col h-[calc(100vh-6rem)] bg-neutral-900 text-white w-full">
+        <div className="flex justify-between items-center p-6 border-b border-neutral-800 bg-neutral-900 sticky top-0 z-20 shadow-lg">
+            <div>
+                <button onClick={onBack} className="flex items-center text-neutral-400 hover:text-white mb-1">← Quay lại</button>
+                <h2 className="text-2xl font-bold text-yellow-500">Sơ đồ: {room.name}</h2>
+            </div>
+            
+            <div className="flex items-center gap-6">
+                <div className="bg-neutral-800 p-1.5 rounded-lg flex gap-1 border border-neutral-700">
+                    {[
+                        { id: 'NORMAL', label: 'Thường', color: 'bg-neutral-600' },
+                        { id: 'VIP', label: 'VIP', color: 'bg-red-600' },
+                        { id: 'COUPLE', label: 'Couple', color: 'bg-pink-600' },
+                        { id: 'TOGGLE', label: 'Bật/Tắt (X)', color: 'bg-yellow-600 text-black' }
+                    ].map(tool => (
+                        <button
+                            key={tool.id}
+                            onClick={() => setSelectedTool(tool.id)}
+                            className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${selectedTool === tool.id ? `${tool.color} text-white` : 'text-neutral-400 hover:bg-neutral-700'}`}
+                        >
+                            {tool.label}
+                        </button>
+                    ))}
+                </div>
+                <button 
+                    onClick={handleSave} 
+                    disabled={!isDirty}
+                    className={`px-6 py-2.5 rounded-lg font-bold uppercase ${isDirty ? 'bg-green-600 hover:bg-green-500' : 'bg-neutral-800 text-neutral-500'}`}
+                >
+                    {isDirty ? "Lưu Thay Đổi" : "Đã Đồng Bộ"}
+                </button>
+            </div>
         </div>
 
-        <div className="flex gap-2 bg-neutral-800 p-2 rounded-lg border border-neutral-700">
-             {/* Toolbar Buttons (Giữ nguyên) */}
-             <button onClick={() => setSelectedTool("NORMAL")} className={`px-4 py-2 rounded font-bold ${selectedTool === 'NORMAL' ? 'bg-neutral-600 text-white' : 'text-neutral-400 hover:bg-neutral-700'}`}>Thường</button>
-             <button onClick={() => setSelectedTool("VIP")} className={`px-4 py-2 rounded font-bold ${selectedTool === 'VIP' ? 'bg-red-600 text-white' : 'text-red-400 hover:bg-neutral-700'}`}>VIP</button>
-             <button onClick={() => setSelectedTool("DELETE")} className={`px-4 py-2 rounded font-bold ${selectedTool === 'DELETE' ? 'bg-red-900 text-red-200' : 'text-neutral-400 hover:bg-neutral-700'}`}>🗑 Xóa (Lối đi)</button>
-        </div>
-      </div>
+        <div className="flex-1 overflow-hidden relative">
+            <div className="absolute inset-0 overflow-auto p-8">
+                <div className="min-w-max flex flex-col items-center pb-20">
+                    
+                    <div className="w-[600px] mb-12 relative group shrink-0">
+                        <div className="h-2 w-full bg-gradient-to-r from-transparent via-yellow-500 to-transparent rounded-full shadow-[0_5px_30px_rgba(234,179,8,0.4)]"></div>
+                        <div className="absolute top-4 left-0 w-full text-center text-neutral-500 text-sm uppercase tracking-[0.5em]">Màn hình chiếu</div>
+                    </div>
 
-      {/* KHU VỰC VẼ GHẾ (GRID MỚI) */}
-      <div className="flex justify-center overflow-auto pb-20">
-         <div className="flex flex-col gap-2">
-            {renderGrid()}
-         </div>
-      </div>
-      
-      {/* Màn hình */}
-      <div className="text-center mt-8">
-        <div className="w-1/2 h-2 bg-yellow-500 mx-auto rounded-full shadow-[0_0_20px_rgba(234,179,8,0.5)]"></div>
-        <p className="text-neutral-500 mt-2 text-sm uppercase">Màn hình chiếu</p>
-      </div>
+                    <div className="bg-neutral-800/30 p-10 rounded-3xl border border-neutral-800/50 shadow-2xl backdrop-blur-sm inline-block">
+                        <div className="flex flex-col gap-1">
+                            {renderGrid()}
+                        </div>
+                    </div>
+
+                    <div className="mt-12 flex gap-8 text-sm text-neutral-400 bg-neutral-800 px-8 py-4 rounded-full border border-neutral-700 shrink-0">
+                        <div className="flex items-center gap-3"><div className="w-5 h-5 rounded bg-neutral-600"></div> Ghế Thường</div>
+                        <div className="flex items-center gap-3"><div className="w-5 h-5 rounded bg-red-600"></div> Ghế VIP</div>
+                        <div className="flex items-center gap-3"><div className="w-8 h-5 rounded bg-pink-600"></div> Ghế Couple</div>
+                        <div className="flex items-center gap-3 opacity-50"><div className="w-2 h-2 rounded-full bg-white"></div> Lối đi</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
   );
 };

@@ -6,6 +6,8 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.stu.AnCinema.Entity.Seats;
 import vn.edu.stu.AnCinema.Repository.SeatsRepository;
+import vn.edu.stu.AnCinema.Service.RoomService;
+import vn.edu.stu.AnCinema.dto.request.SeatRequest;
 import vn.edu.stu.AnCinema.dto.response.ApiResponse;
 
 import java.util.List;
@@ -17,12 +19,17 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class SeatsController {
     SeatsRepository seatsRepository;
-
+    RoomService roomService;
     @GetMapping
     public ApiResponse<List<Seats>> getSeatsByRoom(@RequestParam Integer roomId) {
         return ApiResponse.<List<Seats>>builder()
                 .result(seatsRepository.findByRoomId(roomId))
                 .build();
+    }
+    @PostMapping("/batch-update")
+    public ApiResponse<String> updateBatchSeats(@RequestBody List<SeatRequest> requests) {
+        roomService.updateBatch(requests);
+        return ApiResponse.<String>builder().message("Đã lưu sơ đồ ghế!").build();
     }
     @PutMapping("/{id}")
     public ApiResponse<Seats> updateSeat(@PathVariable Integer id, @RequestBody Seats request) {

@@ -11,7 +11,9 @@ import vn.edu.stu.AnCinema.Entity.Seats;
 import vn.edu.stu.AnCinema.Repository.CinemasRepository;
 import vn.edu.stu.AnCinema.Repository.RoomRepository;
 import vn.edu.stu.AnCinema.Repository.SeatsRepository;
+import vn.edu.stu.AnCinema.Repository.ShowtimesRepository;
 import vn.edu.stu.AnCinema.dto.request.RoomRequest;
+import vn.edu.stu.AnCinema.dto.request.SeatRequest;
 import vn.edu.stu.AnCinema.enums.SeatType;
 
 import java.util.ArrayList;
@@ -25,6 +27,7 @@ public class RoomService {
     RoomRepository roomRepository;
     SeatsRepository seatsRepository;
     CinemasRepository cinemasRepository;
+    ShowtimesRepository showtimesRepository;
 
     @Transactional
     public Rooms createRoom(RoomRequest request) {
@@ -36,14 +39,14 @@ public class RoomService {
                 .totalRows(request.getTotalRows())
                 .build();
 
+        String template = request.getTemplateType() != null ? request.getTemplateType() : "STANDARD";
+
         Rooms savedRoom = roomRepository.save(room);
-
-        generateSeats(savedRoom, request.getTotalRows(), request.getTotalCols());
-
+        generateSeatsByTemplate(savedRoom, request.getTotalRows(), request.getTotalCols(), template); // Gọi hàm mới
         return savedRoom;
     }
 
-    void generateSeats(Rooms room, int rows, int cols) {
+    void generateSeatsByTemplate(Rooms room, int rows, int cols, String template) {
         List<Seats> seats = new ArrayList<>();
 
         for (int r = 1; r <= rows; r++) {
@@ -51,12 +54,28 @@ public class RoomService {
 
             for (int c = 1; c <= cols; c++) {
                 String seatCode = rowChar + String.valueOf(c);
-
                 SeatType type = SeatType.NORMAL;
-                if (r > rows - 7) {
-                    type = SeatType.VIP;
-                } else if (r > rows - 2) {
-                    type = SeatType.COUPLE;
+                boolean isActive = true;
+
+                switch (template) {
+                    case "VIP_HALL":
+                        if (r > 3) type = SeatType.VIP;
+                        break;
+
+                    case "COUPLE_SWEET":
+                        if (r > rows - 2) {
+                            if (c % 2 != 0 && c < cols) {
+                                type = SeatType.COUPLE;
+                            } else if (c % 2 == 0) {
+                                isActive = false;
+                            }
+                        } else if (r > rows - 5) {
+                            type = SeatType.VIP;
+                        }
+                        break;
+
+                    default:
+                        break;
                 }
 
                 Seats seat = Seats.builder()
@@ -65,12 +84,30 @@ public class RoomService {
                         .rowIndex(r)
                         .colIndex(c)
                         .type(type)
+                        .isActive(isActive)
                         .build();
                 seats.add(seat);
             }
         }
         seatsRepository.saveAll(seats);
     }
+
+    @Transactional
+    public void updateBatch(List<SeatRequest> requests) {
+        List<Seats> seatsToUpdate = new ArrayList<>();
+
+        for (SeatRequest req : requests) {
+            Seats seat = seatsRepository.findById(req.getId()).orElse(null);
+
+            if (seat != null) {
+                seat.setType(req.getType());
+                seat.setActive(req.isActive());
+                seatsToUpdate.add(seat);
+            }
+        }
+        seatsRepository.saveAll(seatsToUpdate);
+    }
+
     public Rooms updateRoom(Integer id, RoomRequest request) {
         Rooms room = roomRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Phòng không tồn tại"));
@@ -78,7 +115,16 @@ public class RoomService {
         return roomRepository.save(room);
     }
 
+    @Transactional
     public void deleteRoom(Integer id) {
+        boolean hasShowtimes = showtimesRepository.existsByRoomId(id);
+
+        if (hasShowtimes) {
+            throw new RuntimeException("Không thể xóa phòng này vì ĐÃ CÓ LỊCH CHIẾU !");
+        }
+
+        seatsRepository.deleteAllByRoomId(id);
+
         roomRepository.deleteById(id);
     }
 }

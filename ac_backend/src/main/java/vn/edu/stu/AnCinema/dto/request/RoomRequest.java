@@ -12,5 +12,5 @@ public class RoomRequest {
     String name;
     Integer totalRows;
     Integer totalCols;
-
+    String templateType;
 }

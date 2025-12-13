@@ -15,4 +15,5 @@ public interface ShowtimesRepository extends JpaRepository<Showtimes,Integer> {
             "AND (:startTime < s.endTime AND :endTime > s.startTime)")
     boolean existsByRoomIdAndTimeOverlap(Integer roomId, LocalDateTime startTime, LocalDateTime endTime);
     List<Showtimes> findByMovieId(Integer movieId);
+    boolean existsByRoomId(Integer roomId);
 }

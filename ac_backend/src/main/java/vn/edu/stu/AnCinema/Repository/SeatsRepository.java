@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface SeatsRepository extends JpaRepository<Seats, Integer> {
     List<Seats> findByRoomId(Integer roomId);
+    void deleteAllByRoomId(Integer roomId);
 }

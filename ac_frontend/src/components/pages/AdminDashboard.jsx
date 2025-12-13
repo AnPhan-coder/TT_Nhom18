@@ -24,64 +24,80 @@ const AdminDashboard = () => {
     }
   };
   return (
-    <div className="pt-24 px-8 min-h-screen bg-neutral-900 text-white">
-      <h1 className="text-3xl font-bold text-yellow-500 mb-8">
-        Trang Quản Trị (Admin Dashboard)
-      </h1>
-      <div className="p-6 bg-neutral-800 rounded-lg border border-neutral-700 gap-4 mb-8">
-        <p>Chào mừng Admin quay trở lại!</p>
-        <p>Tại đây bạn sẽ quản lý Phim, Suất chiếu và Đơn hàng.</p>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1 bg-neutral-800 p-6 rounded-lg h-fit">
-          <h3 className="text-xl text-yellow-500 font-bold mb-4">Menu</h3>
-          <ul className="space-y-2 text-neutral-400">
-            <li className="p-2 hover:bg-neutral-700 rounded cursor-pointer">
-              <button
-                onClick={() => setActiveTab("movies")}
-                className={`px-4 py-2 rounded font-bold ${
-                  activeTab === "movies"
-                    ? "bg-neutral-600 text-white"
-                    : "text-neutral-400 hover:bg-neutral-700"
-                }`}
-              >
-                Quản lý Phim
-              </button>
-            </li>
-            <li className="p-2 hover:bg-neutral-700 rounded cursor-pointer">
-              <button
-                onClick={() => setActiveTab("showtimes")}
-                className={`px-4 py-2 rounded font-bold ${
-                  activeTab === "showtimes"
-                    ? "bg-neutral-600 text-white"
-                    : "text-neutral-400 hover:bg-neutral-700"
-                }`}
-              >
-                Quản lý Lịch chiếu
-              </button>
-            </li>
-            <li className="p-2 hover:bg-neutral-700 rounded cursor-pointer">
-              <button
-                onClick={() => setActiveTab("rooms")}
-                className={`px-4 py-2 rounded font-bold ${
-                  activeTab === "rooms"
-                    ? "bg-neutral-600 text-white"
-                    : "text-neutral-400 hover:bg-neutral-700"
-                }`}
-              >
-                Quản lý Phòng Chiếu
-              </button>
-            </li>
-            <li className="p-2 hover:bg-neutral-700 rounded cursor-pointer">
-              Thống kê
-            </li>
-          </ul>
-        </div>
+    <div className="min-h-screen bg-neutral-900 text-white flex flex-col pt-20"> 
+      
+      <div className="flex flex-1 w-full max-w-[1920px] mx-auto"> 
+        
+        <aside className="w-64 lg:w-72 bg-neutral-800 border-r border-neutral-700 flex-shrink-0 hidden md:block min-h-screen">
+          <div className="p-6 fixed w-64 lg:w-72 h-full overflow-y-auto">
+            <h2 className="text-xl font-bold text-yellow-500 mb-8 uppercase tracking-widest">
+              Trang Quản Trị
+            </h2>
+            
+            <nav className="space-y-2">
+              <SidebarItem 
+                label="Quản lý Phim" 
+                active={activeTab === "movies"} 
+                onClick={() => setActiveTab("movies")} 
+              />
+              <SidebarItem 
+                label="Quản lý Lịch chiếu" 
+                active={activeTab === "showtimes"} 
+                onClick={() => setActiveTab("showtimes")} 
+              />
+              <SidebarItem 
+                label="Quản lý Phòng Chiếu" 
+                active={activeTab === "rooms"} 
+                onClick={() => setActiveTab("rooms")} 
+              />
+              <div className="my-4 border-t border-neutral-700"></div>
+              <SidebarItem 
+                label="Thống kê Doanh thu" 
+                active={activeTab === "stats"} 
+                onClick={() => setActiveTab("stats")} 
+              />
+            </nav>
+            
+            <div className="mt-auto pt-8 text-xs text-neutral-500">
+              AnCinema Admin v1.0
+            </div>
+          </div>
+        </aside>
 
-        <div className="lg:col-span-2">{renderContent()} </div>
+        <main className="flex-1 p-8 bg-neutral-900 overflow-x-hidden">
+          <div className="md:hidden mb-6">
+             <select 
+                className="w-full bg-neutral-800 p-3 rounded text-white border border-neutral-700"
+                value={activeTab}
+                onChange={(e) => setActiveTab(e.target.value)}
+             >
+                <option value="movies">Quản lý Phim</option>
+                <option value="showtimes">Quản lý Lịch chiếu</option>
+                <option value="rooms">Quản lý Phòng</option>
+             </select>
+          </div>
+
+          <div className="max-w-7xl mx-auto"> 
+             {renderContent()}
+          </div>
+        </main>
+
       </div>
     </div>
   );
 };
+
+const SidebarItem = ({ label, active, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 font-medium ${
+      active
+        ? "bg-yellow-500 text-neutral-900 font-bold shadow-lg shadow-yellow-500/20"
+        : "text-neutral-400 hover:bg-neutral-700 hover:text-white"
+    }`}
+  >
+    {label}
+  </button>
+);
 
 export default AdminDashboard;

@@ -25,7 +25,8 @@ public class Seats {
 
     @Enumerated(EnumType.STRING)
     SeatType type;
-
+    @Column(columnDefinition = "boolean default true")
+    boolean isActive;
     @ManyToOne
     @JoinColumn(name = "room_id")
     @JsonIgnore
