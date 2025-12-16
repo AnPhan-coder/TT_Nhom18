@@ -29,4 +29,7 @@ public interface MoviesRepository extends JpaRepository<Movies, String> {
             @Param("status") MoviesStatus status,
             @Param("genreId") Integer genreId
     );
+    @Query("SELECT m FROM Movies m WHERE m.status = 'active' " +
+            "AND (SELECT COUNT(s) FROM Showtimes s WHERE s.movie.id = m.id AND s.startTime > CURRENT_TIMESTAMP) = 0")
+    List<Movies> findExpiredMovies();
 }

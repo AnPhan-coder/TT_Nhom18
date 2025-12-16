@@ -82,7 +82,6 @@ const MovieForm = ({ movieId, onBack }) => {
   const handleCreateGenre = async (inputValue) => {
     setLoading(true);
     try {
-      // Gọi API tạo mới ngay lập tức
       const res = await axios.post("http://localhost:8080/api/genres", {
         name: inputValue,
       });
@@ -303,7 +302,7 @@ const MovieForm = ({ movieId, onBack }) => {
               options={actorOptions}
               value={selectedActors}
               onChange={handleActorChange}
-              onCreateOption={handleCreateActor} // Hàm xử lý tạo mới
+              onCreateOption={handleCreateActor} 
               styles={customStyles}
               placeholder="Chọn hoặc gõ tên diễn viên mới..."
               formatCreateLabel={(inputValue) => `Tạo mới: "${inputValue}"`}

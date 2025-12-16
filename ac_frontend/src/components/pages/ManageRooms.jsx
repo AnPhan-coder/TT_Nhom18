@@ -87,7 +87,7 @@ const ManageRooms = () => {
   }
 
   return (
-    <div className="p-8 text-white w-full"> {/* Thêm w-full để chiếm hết chiều rộng */}
+    <div className="p-8 text-white w-full"> 
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-yellow-500">Quản Lý Phòng Chiếu</h2>
         <button
@@ -98,7 +98,6 @@ const ManageRooms = () => {
         </button>
       </div>
 
-      {/* GRID RESPONSIVE: Trên màn hình lớn (xl) sẽ chia 3 cột, màn hình vừa (md) chia 2 cột */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {rooms.map((room) => (
           <div
