@@ -20,6 +20,7 @@ import Header from './components/Header/Header';
 import Footer from './components/Footer/Footer';
 
 function App() {
+  const isAdminRoute = location.pathname.startsWith('/admin/dashboard');
   return (
     
     <Router>
@@ -58,7 +59,7 @@ function App() {
           </Routes>
         </main>
         
-        <Footer />
+        {!isAdminRoute && <Footer />}
       </div>
     </Router>
   );
