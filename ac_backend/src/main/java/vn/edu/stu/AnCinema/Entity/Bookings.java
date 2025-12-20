@@ -28,6 +28,7 @@ public class Bookings {
     @JoinColumn(name = "showtime_id")
     Showtimes showtime;
 
+
     @Column(name = "booking_time")
     LocalDateTime bookingTime;
 

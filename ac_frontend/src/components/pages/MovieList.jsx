@@ -3,20 +3,36 @@ import axios from "axios";
 import MovieForm from "./MovieForm";
 import Swal from "sweetalert2"; 
 import { toast } from "react-toastify";
+import { useSearchParams } from "react-router-dom"; 
+
 const MovieList = () => {
   const [movies, setMovies] = useState([]);
   const [view, setView] = useState("list");
   const [genres, setGenres] = useState([]);
   const [selectedMovieId, setSelectedMovieId] = useState(null);
+  
+  const [searchParams] = useSearchParams();
+  const keywordFromUrl = searchParams.get("keyword");
+
   const [filters, setFilters] = useState({
     keyword: "",
     status: "",
     genreId: "",
   });
+
   useEffect(() => {
     loadGenres();
-    loadMovies();
   }, []);
+
+  useEffect(() => {
+    if (keywordFromUrl) {
+        setFilters(prev => ({ ...prev, keyword: keywordFromUrl }));
+        loadMoviesWithFilter({ ...filters, keyword: keywordFromUrl });
+    } else {
+        loadMovies();
+    }
+  }, [keywordFromUrl]);
+
   const loadGenres = async () => {
     try {
       const res = await axios.get("http://localhost:8080/api/genres");
@@ -25,12 +41,17 @@ const MovieList = () => {
       console.error("Lỗi tải thể loại:", error);
     }
   };
+
   const loadMovies = async () => {
+    loadMoviesWithFilter(filters);
+  };
+
+  const loadMoviesWithFilter = async (currentFilters) => {
     try {
       const params = {};
-      if (filters.keyword) params.keyword = filters.keyword;
-      if (filters.status) params.status = filters.status;
-      if (filters.genreId) params.genreId = filters.genreId;
+      if (currentFilters.keyword) params.keyword = currentFilters.keyword;
+      if (currentFilters.status) params.status = currentFilters.status;
+      if (currentFilters.genreId) params.genreId = currentFilters.genreId;
 
       const res = await axios.get("http://localhost:8080/api/movies/search", {
         params,
@@ -40,20 +61,23 @@ const MovieList = () => {
       console.error("Lỗi tải phim:", error);
     }
   };
+
   const handleFilterChange = (e) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
   };
+
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     loadMovies();
   };
+
   const handleReset = () => {
     setFilters({ keyword: "", status: "", genreId: "" });
     axios.get("http://localhost:8080/api/movies/search").then((res) => {
       setMovies(res.data.result || res.data);
-      setFilters({ keyword: "", status: "", genreId: "" });
     });
   };
+
   const handleDelete = async (id) => {
    Swal.fire({
       title: "Xóa phim này?",
@@ -90,6 +114,7 @@ const MovieList = () => {
     setView("list");
     loadMovies();
   };
+
   if (view === "form") {
     return <MovieForm movieId={selectedMovieId} onBack={handleBack} />;
   }

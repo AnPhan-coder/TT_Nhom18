@@ -173,4 +173,30 @@ public class BookingService {
 
         emailService.sendEmail(userEmail, subject, content);
     }
+
+    @Transactional
+    public void cancelBooking(Integer bookingId, String email) {
+        Bookings booking = bookingsRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
+
+        if (!booking.getUser().getEmail().equals(email)) {
+            throw new RuntimeException("Bạn không có quyền hủy đơn hàng này!");
+        }
+
+        if (booking.getStatus() != BookingStatus.pending) {
+            throw new RuntimeException("Không thể hủy vé đã thanh toán hoặc đã bị hủy trước đó.");
+        }
+
+        bookingsRepository.delete(booking);
+    }
+    public Bookings getBookingById(Integer id, String email) {
+        Bookings booking = bookingsRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
+
+        if (!booking.getUser().getEmail().equals(email)) {
+            throw new RuntimeException("Bạn không có quyền xem thông tin vé này!");
+        }
+
+        return booking;
+    }
 }

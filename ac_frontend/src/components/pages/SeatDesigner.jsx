@@ -144,7 +144,21 @@ const SeatDesigner = ({ room, onBack }) => {
       }
     });
   };
+const getAisleColumns = () => {
+    const totalCols = room.totalCols;
+    const centerBlock = 8; // Quy tắc: Khối giữa tối đa 8 ghế
 
+    // Nếu phòng nhỏ hơn hoặc bằng 8 cột thì không cần chia lối đi
+    if (totalCols <= centerBlock) return [];
+
+    const sideBlock = Math.floor((totalCols - centerBlock) / 2);
+    
+    // Lối đi 1: Sau khối bên trái
+    // Lối đi 2: Sau khối giữa (Tức là trước khối bên phải)
+    return [sideBlock, sideBlock + centerBlock];
+  };
+
+  const aisleCols = getAisleColumns();
   const renderGrid = () => {
     const grid = [];
     for (let r = 1; r <= room.totalRows; r++) {
@@ -158,9 +172,10 @@ const SeatDesigner = ({ room, onBack }) => {
                  const prevSeat = seats.find(s => s.rowIndex === r && s.colIndex === c - 1);
                  if (prevSeat && prevSeat.type === "COUPLE" && prevSeat.active) continue;
             }
-
+const isAisle = aisleCols.includes(c);
+            const marginClass = isAisle ? "mr-12" : "mr-1";
             rowCells.push(
-                <div key={`${r}-${c}`} onClick={() => seat && handleCellClick(r, c)} className="m-1">
+                <div key={`${r}-${c}`} onClick={() => seat && handleCellClick(r, c)} className={`m-1 ${marginClass}`}>
                    <SeatIcon 
                       type={seat?.type || "NORMAL"} 
                       isHidden={!seat?.active} 

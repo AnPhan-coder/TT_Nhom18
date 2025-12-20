@@ -9,6 +9,59 @@ const PaymentPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   
+  const [booking, setBooking] = useState(null); 
+  const [timeLeft, setTimeLeft] = useState(600); 
+
+  useEffect(() => {
+      const fetchBookingDetail = async () => {
+          try {
+              const res = await axiosClient.get(`/bookings/${bookingId}`); 
+              if (res.data.result) {
+                  setBooking(res.data.result);
+                  
+                  const bookingTime = new Date(res.data.result.bookingTime).getTime();
+                  const now = new Date().getTime();
+                  const diff = Math.floor((now - bookingTime) / 1000); 
+                  const remaining = 600 - diff; 
+                  
+                  setTimeLeft(remaining > 0 ? remaining : 0);
+              }
+          } catch (error) {
+              console.error("Lỗi tải vé:", error);
+          }
+      };
+      fetchBookingDetail();
+  }, [bookingId]);
+
+  useEffect(() => {
+      if (timeLeft <= 0) return;
+      const timer = setInterval(() => {
+          setTimeLeft(prev => prev - 1);
+      }, 1000);
+      return () => clearInterval(timer);
+  }, [timeLeft]);
+
+  const formatTime = (seconds) => {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  const handleCancelBooking = async () => {
+    try {
+      await axiosClient.post(`/bookings/cancel/${bookingId}`);
+      toast.info("Đã hủy giữ ghế.");
+      
+      if (booking && booking.showtime) {
+          navigate(`/booking/${booking.showtime.id}`);
+      } else {
+          navigate("/"); 
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Lỗi khi hủy vé");
+    }
+  };
+
   const handleConfirmPayment = async () => {
     Swal.fire({
       title: "Xác nhận đã chuyển khoản?",
@@ -25,12 +78,12 @@ const PaymentPage = () => {
       if (result.isConfirmed) {
         setLoading(true);
         try {
-          const response = await axiosClient.post(`/bookings/${bookingId}/pay`);
+          const response = await axiosClient.post(`/bookings/payment/${bookingId}`);
           
           if (response.data.code === 1000 || response.data.result) {
             Swal.fire({
               title: "Thanh toán thành công!",
-              text: "Cảm ơn bạn đã sử dụng dịch vụ của AnCinema.",
+              text: "Vé đã được gửi về email của bạn.",
               icon: "success",
               background: "#171717",
               color: "#fff",
@@ -64,7 +117,7 @@ const PaymentPage = () => {
             <h3 className="text-xl font-bold text-yellow-500 mb-4">Cách 1: Chuyển khoản QR</h3>
             <div className="bg-white p-4 rounded-lg inline-block mx-auto">
                 <img 
-                    src={`https://img.vietqr.io/image/MB-0000000000-compact2.png?amount=0&addInfo=Thanh toan ve ${bookingId}`} 
+                    src={`https://img.vietqr.io/image/MB-0000000000-compact2.png?amount=${booking?.totalPrice || 0}&addInfo=Thanh toan ve ${bookingId}`} 
                     alt="QR Payment" 
                     className="w-48 h-48 object-contain"
                 />
@@ -74,7 +127,6 @@ const PaymentPage = () => {
             </p>
           </div>
 
-          {/* Cột phải: Hướng dẫn & Nút bấm */}
           <div className="flex flex-col justify-center space-y-6">
              <div>
                 <h3 className="text-xl font-bold text-yellow-500 mb-2">Lưu ý quan trọng</h3>
@@ -85,22 +137,23 @@ const PaymentPage = () => {
                 </ul>
              </div>
 
-             <button 
-                onClick={handleConfirmPayment}
-                disabled={loading}
-                className={`w-full py-4 rounded-lg font-bold text-lg uppercase tracking-wider transition-all
-                  ${loading ? "bg-neutral-600 cursor-not-allowed" : "bg-green-600 hover:bg-green-500 text-white shadow-lg hover:shadow-green-500/30"}
-                `}
-             >
-                {loading ? "Đang xử lý..." : "Xác nhận đã thanh toán"}
-             </button>
-             
-             <button 
-                onClick={() => navigate("/")}
-                className="w-full py-3 text-neutral-500 hover:text-white transition-colors"
-             >
-                Hủy giao dịch
-             </button>
+             <div className="countdown-timer text-red-500 font-bold text-xl text-center border-2 border-red-900/50 p-2 rounded bg-red-900/10">
+                 Thời gian còn lại: {formatTime(timeLeft)}
+             </div>
+
+             <div className="flex gap-4 mt-6">
+                 <button 
+                    onClick={handleConfirmPayment} 
+                    disabled={loading || timeLeft === 0}
+                    className={`flex-1 py-3 rounded font-bold uppercase ${loading ? 'bg-gray-600' : 'bg-green-600 hover:bg-green-500'}`}
+                 >
+                    {loading ? "Đang xử lý..." : "Xác nhận thanh toán"}
+                 </button>
+                 
+                 <button onClick={handleCancelBooking} className="px-4 py-3 rounded font-bold text-red-500 border border-red-500 hover:bg-red-900/20">
+                    Hủy & Chọn lại
+                 </button>
+             </div>
           </div>
         </div>
       </div>

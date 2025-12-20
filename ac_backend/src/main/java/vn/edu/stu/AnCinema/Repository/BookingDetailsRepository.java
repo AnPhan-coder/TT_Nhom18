@@ -14,6 +14,7 @@ public interface BookingDetailsRepository extends JpaRepository<BookingDetails, 
     //lay danh sach id dat dat ghe, trang thai != canceled
     @Query("SELECT bd.seat.id FROM BookingDetails bd " +
             "WHERE bd.booking.showtime.id = :showtimeId " +
-            "AND bd.booking.status <> 'CANCELLED'")
+            "AND bd.booking.status <> 'cancelled'")
     List<Integer> findBookedSeatIdsByShowtimeId(@Param("showtimeId") Integer showtimeId);
+
 }

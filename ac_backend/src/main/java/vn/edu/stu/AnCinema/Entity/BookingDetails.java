@@ -19,7 +19,7 @@ public class BookingDetails {
 
     @ManyToOne
     @JoinColumn(name = "booking_id")
-    @JsonIgnore // Tránh vòng lặp vô tận khi convert JSON
+    @JsonIgnore
     Bookings booking;
 
     @ManyToOne

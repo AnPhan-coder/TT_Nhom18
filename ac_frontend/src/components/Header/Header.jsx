@@ -9,6 +9,7 @@ const Header = () => {
   const location = useLocation();
   const [user, setUser] = useState(null);
   const dropdownRef = useRef(null);
+  const [keyword, setKeyword] = useState("");
 
   useEffect(() => {
     const updateAuthStatus = () => {
@@ -42,7 +43,15 @@ const Header = () => {
     window.dispatchEvent(new Event("auth-change"));
     navigate("/");
   };
-
+const handleSearch = (e) => {
+    e.preventDefault(); // Chặn reload trang
+    if (keyword.trim()) {
+        // Chuyển hướng sang trang MovieList kèm từ khóa
+        navigate(`/movies?keyword=${encodeURIComponent(keyword)}`);
+        setKeyword(""); // Reset ô tìm kiếm sau khi enter
+        setIsMobileMenuOpen(false); // Đóng menu mobile nếu đang mở
+    }
+  };
   const isActive = (path) =>
     location.pathname === path ? "nav-link active" : "nav-link";
   const getAvatarLetter = (name) => (name ? name.charAt(0).toUpperCase() : "U");
@@ -100,13 +109,17 @@ const Header = () => {
         </nav>
 
         <div className="header-actions">
-          <div className="search-box hidden md:flex">
-            <input type="text" placeholder="Tìm phim..." />
-            <button>
+         <form onSubmit={handleSearch} className="search-box hidden md:flex">
+            <input 
+                type="text" 
+                placeholder="Tìm tên phim..." 
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+            />
+            <button type="submit">
               <Search size={18} />
             </button>
-          </div>
-
+          </form>
           {user ? (
             <div className="relative ml-4" ref={dropdownRef}>
               <button

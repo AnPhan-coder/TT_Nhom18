@@ -14,6 +14,7 @@ import AdminRoute from './components/pages/AdminRoute';
 import AdminDashboard from './components/pages/AdminDashboard';
 import PaymentPage from './components/pages/PaymentPage';
 import ProfilePage from './components/pages/ProfilePage';
+import MovieList from './components/pages/MovieList';
 
 import Header from './components/Header/Header';
 import Footer from './components/Footer/Footer';
@@ -46,6 +47,7 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/movie/:id" element={<MovieDetail />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/movies" element={<MovieList />} />
             
             <Route path="/booking/:showtimeId" element={<BookingPage />} />
             <Route path="/payment/:bookingId" element={<PaymentPage />} />
