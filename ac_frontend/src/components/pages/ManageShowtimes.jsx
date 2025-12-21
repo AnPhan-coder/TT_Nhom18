@@ -270,7 +270,7 @@ const ManageShowtimes = () => {
             <div>
                 <label className="block text-neutral-400 mb-2 font-medium">Giá vé cơ bản</label>
                 <input
-                    type="number" step="5000" min="45000"
+                    type="number" step="5000" min="45000" max="200000"
                     className="w-full p-3 bg-neutral-900 border border-neutral-600 rounded-lg text-white focus:border-yellow-500 outline-none font-mono"
                     onChange={(e) => setFormData({ ...formData, basePrice: e.target.value })}
                     value={formData.basePrice}

@@ -189,6 +189,7 @@ public class BookingService {
 
         bookingsRepository.delete(booking);
     }
+
     public Bookings getBookingById(Integer id, String email) {
         Bookings booking = bookingsRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
@@ -198,5 +199,17 @@ public class BookingService {
         }
 
         return booking;
+    }
+
+    public List<Bookings> getAllBookings() {
+        return bookingsRepository.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "bookingTime"));
+    }
+
+    @Transactional
+    public void deleteBooking(Integer id) {
+        if (!bookingsRepository.existsById(id)) {
+            throw new RuntimeException("Vé không tồn tại!");
+        }
+        bookingsRepository.deleteById(id);
     }
 }

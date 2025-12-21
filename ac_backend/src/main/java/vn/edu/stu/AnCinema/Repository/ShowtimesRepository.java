@@ -28,4 +28,7 @@ public interface ShowtimesRepository extends JpaRepository<Showtimes,Integer> {
     List<Showtimes> checkOverlap(@Param("roomId") Integer roomId,
                                  @Param("startTime") LocalDateTime startTime,
                                  @Param("endTime") LocalDateTime endTime);
+
+    @Query("SELECT s FROM Showtimes s WHERE s.isActive = true AND s.endTime < :now")
+    List<Showtimes> findActivePastShowtimes(@Param("now") LocalDateTime now);
 }
