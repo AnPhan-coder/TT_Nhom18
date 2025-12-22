@@ -12,7 +12,7 @@ const formatCurrency = (amount) => {
 };
 
 const BookingSeatIcon = ({ seat, isSelected, onSelect }) => {
-  const isBooked = seat.isBooked || seat.booked;
+  const isBooked = seat.booked;
   const type = seat.type || "NORMAL";
   const code = seat.code || "";
   const label = code.length > 1 ? code.substring(1) : code;

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axiosClient from "../../api/axiosClient";
 import CreatableSelect from "react-select/creatable";
 import { toast } from "react-toastify";
+import { Upload, Link as LinkIcon, Image as ImageIcon } from "lucide-react"; 
 
 const MovieForm = ({ movieId, onBack }) => {
   const isEdit = !!movieId;
@@ -21,6 +22,9 @@ const MovieForm = ({ movieId, onBack }) => {
   const [genreOptions, setGenreOptions] = useState([]);
   const [actorOptions, setActorOptions] = useState([]);
 
+  const [posterMode, setPosterMode] = useState("URL"); 
+  const [uploading, setUploading] = useState(false);
+
   const [selectedGenres, setSelectedGenres] = useState([]);
   const [selectedActors, setSelectedActors] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -28,8 +32,8 @@ const MovieForm = ({ movieId, onBack }) => {
     const fetchData = async () => {
       try {
         const [resGenres, resActors] = await Promise.all([
-          axios.get("http://localhost:8080/api/genres"),
-          axios.get("http://localhost:8080/api/actors"),
+          axiosClient.get("/genres"),
+          axiosClient.get("/actors"),
         ]);
 
         const gOptions = resGenres.data.map((g) => ({
@@ -45,9 +49,7 @@ const MovieForm = ({ movieId, onBack }) => {
         setActorOptions(aOptions);
 
         if (isEdit) {
-          const resMovie = await axios.get(
-            `http://localhost:8080/api/movies/${movieId}`
-          );
+          const resMovie = await axiosClient.get(`/movies/${movieId}`);
           const m = resMovie.data.result;
 
           setFormData({
@@ -82,7 +84,7 @@ const MovieForm = ({ movieId, onBack }) => {
   const handleCreateGenre = async (inputValue) => {
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:8080/api/genres", {
+      const res = await axiosClient.post("/genres", {
         name: inputValue,
       });
       const newGenre = res.data;
@@ -105,7 +107,7 @@ const MovieForm = ({ movieId, onBack }) => {
   const handleCreateActor = async (inputValue) => {
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:8080/api/actors", {
+     const res = await axiosClient.post("/actors", {
         name: inputValue,
       });
       const newActor = res.data;
@@ -125,6 +127,7 @@ const MovieForm = ({ movieId, onBack }) => {
       setLoading(false);
     }
   };
+
   const handleGenreChange = (selectedOptions) => {
     setSelectedGenres(selectedOptions);
     setFormData({
@@ -140,21 +143,49 @@ const MovieForm = ({ movieId, onBack }) => {
       actorIds: selectedOptions ? selectedOptions.map((opt) => opt.value) : [],
     });
   };
+const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
+    if (!file.type.startsWith("image/")) {
+        toast.error("Vui lòng chọn file ảnh (jpg, png...)");
+        return;
+    }
+
+    const formDataUpload = new FormData();
+    formDataUpload.append("file", file);
+
+    setUploading(true);
+    try {
+        const res = await axiosClient.post("/upload", formDataUpload, {
+            headers: { "Content-Type": "multipart/form-data" }
+        });
+        const imageUrl = res.result || res.data?.result;
+
+        if (imageUrl) {
+            setFormData(prev => ({ ...prev, posterUrl: imageUrl }));
+            toast.success("Đã tải ảnh lên thành công!");
+        } else {
+            console.log("Response upload:", res); 
+        }
+    } catch (error) {
+        console.error(error);
+        toast.error("Lỗi upload ảnh: " + (error.response?.data?.message || "Lỗi server"));
+    } finally {
+        setUploading(false);
+    }
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (isEdit) {
-        await axios.put(
-          `http://localhost:8080/api/movies/${movieId}`,
-          formData
-        );
-        toast.success("Cập nhật phim thành công!");
-      } else {
-        await axios.post("http://localhost:8080/api/movies", formData);
-        toast.success("Thêm phim mới thành công!");
-      }
-      onBack();
+        if (isEdit) {
+            await axiosClient.put(`/movies/${movieId}`, formData);
+            toast.success("Cập nhật phim thành công!");
+        } else {
+            await axiosClient.post("/movies", formData);
+            toast.success("Thêm phim mới thành công!");
+        }
+        onBack();
     } catch (error) {
       console.error(error);
       toast.error("Lỗi lưu phim: " + (error.response?.data?.message || "Lỗi server"));
@@ -256,15 +287,62 @@ const MovieForm = ({ movieId, onBack }) => {
         </div>
 
         <div className="space-y-4">
+          
           <div>
-            <label className="text-neutral-400 block mb-1">Link Poster</label>
-            <input
-              name="posterUrl"
-              value={formData.posterUrl}
-              onChange={handleChange}
-              className="w-full bg-neutral-900 border border-neutral-600 p-2 rounded text-white focus:border-yellow-500 outline-none"
-              placeholder="https://..."
-            />
+            <label className="text-neutral-400 block mb-1">Poster Phim</label>
+            
+            <div className="flex gap-2 mb-2 text-sm">
+                <button 
+                    type="button"
+                    onClick={() => setPosterMode("URL")}
+                    className={`flex items-center gap-1 px-3 py-1 rounded ${posterMode === 'URL' ? 'bg-yellow-500 text-black font-bold' : 'bg-neutral-700 text-neutral-400'}`}
+                >
+                    <LinkIcon size={14}/> Link URL
+                </button>
+                <button 
+                    type="button"
+                    onClick={() => setPosterMode("FILE")}
+                    className={`flex items-center gap-1 px-3 py-1 rounded ${posterMode === 'FILE' ? 'bg-yellow-500 text-black font-bold' : 'bg-neutral-700 text-neutral-400'}`}
+                >
+                    <Upload size={14}/> Tải ảnh lên
+                </button>
+            </div>
+
+            {posterMode === "URL" ? (
+                <input
+                  name="posterUrl"
+                  value={formData.posterUrl}
+                  onChange={handleChange}
+                  className="w-full bg-neutral-900 border border-neutral-600 p-2 rounded text-white focus:border-yellow-500 outline-none"
+                  placeholder="https://..."
+                />
+            ) : (
+                <div className="border border-dashed border-neutral-600 rounded p-4 text-center hover:bg-neutral-900 transition-colors relative">
+                    <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={handleFileUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        disabled={uploading}
+                    />
+                    <div className="flex flex-col items-center text-neutral-400">
+                        {uploading ? (
+                            <span>Đang tải lên...</span>
+                        ) : (
+                            <>
+                                <Upload size={24} className="mb-2"/>
+                                <span className="text-sm">Chọn ảnh từ máy</span>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {formData.posterUrl && (
+                <div className="mt-2 relative group w-24 h-36 border border-neutral-700 rounded overflow-hidden">
+                    <img src={formData.posterUrl} alt="Preview" className="w-full h-full object-cover"/>
+                </div>
+            )}
           </div>
           <div>
             <label className="text-neutral-400 block mb-1">Link Trailer</label>
@@ -279,7 +357,7 @@ const MovieForm = ({ movieId, onBack }) => {
 
           <div>
             <label className="text-neutral-400 block mb-1">
-              Thể loại (Gõ để thêm mới)
+              Thể loại
             </label>
             <CreatableSelect
               isMulti
@@ -295,7 +373,7 @@ const MovieForm = ({ movieId, onBack }) => {
           </div>
           <div>
             <label className="text-neutral-400 block mb-1">
-              Diễn viên (Gõ để thêm mới)
+              Diễn viên
             </label>
             <CreatableSelect
               isMulti
