@@ -20,7 +20,10 @@ public class Movies {
     Integer id;
 
     String title;
+
+    @Column(columnDefinition = "TEXT")
     String description;
+
     Integer duration;
     String director;
 

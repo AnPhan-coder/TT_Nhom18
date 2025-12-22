@@ -17,4 +17,6 @@ public interface BookingDetailsRepository extends JpaRepository<BookingDetails, 
             "AND bd.booking.status <> 'cancelled'")
     List<Integer> findBookedSeatIdsByShowtimeId(@Param("showtimeId") Integer showtimeId);
 
+    @Query("SELECT COUNT(bd) FROM BookingDetails bd WHERE bd.booking.showtime.id = :showtimeId AND bd.booking.status <> 'CANCELLED'")
+    int countBookedSeatsByShowtimeId(@Param("showtimeId") Integer showtimeId);
 }

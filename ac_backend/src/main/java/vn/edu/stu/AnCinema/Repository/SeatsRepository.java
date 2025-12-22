@@ -10,4 +10,5 @@ import java.util.List;
 public interface SeatsRepository extends JpaRepository<Seats, Integer> {
     List<Seats> findByRoomId(Integer roomId);
     void deleteAllByRoomId(Integer roomId);
+    int countByRoomIdAndIsActiveTrue(Integer roomId);
 }

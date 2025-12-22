@@ -408,9 +408,7 @@ const aisleConfig = useMemo(() => {
                     return null;
                   }
 
-                  // --- LOGIC LỐI ĐI ---
                   const isAisle = aisleConfig.includes(seat.colIndex);
-                  // --------------------
 
                   return (
                     <div

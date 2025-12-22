@@ -9,6 +9,7 @@ import vn.edu.stu.AnCinema.Entity.Showtimes;
 import vn.edu.stu.AnCinema.Service.ShowtimeService;
 import vn.edu.stu.AnCinema.dto.request.ShowtimeRequest;
 import vn.edu.stu.AnCinema.dto.response.ApiResponse;
+import vn.edu.stu.AnCinema.dto.response.ShowtimeResponse;
 
 import java.util.List;
 
@@ -19,9 +20,12 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AdminShowtimeController {
     ShowtimeService showtimeService;
+
     @GetMapping
-    public ApiResponse<List<Showtimes>> getAll() {
-        return ApiResponse.<List<Showtimes>>builder().result(showtimeService.getAllShowtimes()).build();
+    public ApiResponse<List<ShowtimeResponse>> getAll() {
+        return ApiResponse.<List<ShowtimeResponse>>builder()
+                .result(showtimeService.getAllShowtimes())
+                .build();
     }
 
     @DeleteMapping("/{id}")

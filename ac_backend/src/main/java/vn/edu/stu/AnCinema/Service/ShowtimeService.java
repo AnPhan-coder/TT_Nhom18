@@ -8,14 +8,14 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.edu.stu.AnCinema.Entity.Movies;
 import vn.edu.stu.AnCinema.Entity.Rooms;
 import vn.edu.stu.AnCinema.Entity.Showtimes;
-import vn.edu.stu.AnCinema.Repository.MoviesRepository;
-import vn.edu.stu.AnCinema.Repository.RoomRepository;
-import vn.edu.stu.AnCinema.Repository.ShowtimesRepository;
+import vn.edu.stu.AnCinema.Repository.*;
 import vn.edu.stu.AnCinema.dto.request.ShowtimeRequest;
+import vn.edu.stu.AnCinema.dto.response.ShowtimeResponse;
 import vn.edu.stu.AnCinema.enums.MoviesStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,12 +24,34 @@ public class ShowtimeService {
     ShowtimesRepository showtimesRepository;
     MoviesRepository moviesRepository;
     RoomRepository roomRepository;
+    BookingDetailsRepository bookingDetailsRepository;
+    SeatsRepository seatsRepository;
+
     int CLEANING_TIME = 15;
 
-    public List<Showtimes> getAllShowtimes() {
-        return showtimesRepository.findAllByOrderByStartTimeDesc();
-    }
+    public List<ShowtimeResponse> getAllShowtimes() {
+        List<Showtimes> list = showtimesRepository.findAllByOrderByStartTimeDesc();
 
+        return list.stream().map(showtime -> {
+            int booked = bookingDetailsRepository.countBookedSeatsByShowtimeId(showtime.getId());
+
+            int total = seatsRepository.countByRoomIdAndIsActiveTrue(showtime.getRoom().getId());
+
+            int notBooked = total - booked;
+
+            return ShowtimeResponse.builder()
+                    .id(showtime.getId())
+                    .startTime(showtime.getStartTime())
+                    .endTime(showtime.getEndTime())
+                    .basePrice(showtime.getBasePrice())
+                    .isActive(showtime.getIsActive())
+                    .movie(showtime.getMovie())
+                    .room(showtime.getRoom())
+                    .notBooked(notBooked)
+                    .totalSeats(total)
+                    .build();
+        }).collect(Collectors.toList());
+    }
     @Transactional
     public Showtimes createShowtime(ShowtimeRequest request) {
         Movies movie = moviesRepository.findById(request.getMovieId())
