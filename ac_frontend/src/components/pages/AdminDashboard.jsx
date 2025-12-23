@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import ManageShowtimes from "./ManageShowtimes";
 import MovieList from "./MovieList";
 import ManageRooms from "./ManageRooms";
+import ManageUsers from "./ManageUsers";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("movies");
@@ -13,6 +14,8 @@ const AdminDashboard = () => {
         return <ManageShowtimes />;
       case "rooms":
         return <ManageRooms />;
+      case "users":
+        return <ManageUsers />;
       case "stats":
         return (
           <div className="text-white">
@@ -50,6 +53,11 @@ const AdminDashboard = () => {
                 active={activeTab === "rooms"} 
                 onClick={() => setActiveTab("rooms")} 
               />
+              <SidebarItem 
+                label="Quản lý Người dùng" 
+                active={activeTab === "users"} 
+                onClick={() => setActiveTab("users")} 
+              />
               <div className="my-4 border-t border-neutral-700"></div>
               <SidebarItem 
                 label="Thống kê Doanh thu" 
@@ -74,6 +82,8 @@ const AdminDashboard = () => {
                 <option value="movies">Quản lý Phim</option>
                 <option value="showtimes">Quản lý Lịch chiếu</option>
                 <option value="rooms">Quản lý Phòng</option>
+                <option value="users">Quản lý Người dùng</option>
+                <option value="stats">Thống kê Doanh thu</option>
              </select>
           </div>
 

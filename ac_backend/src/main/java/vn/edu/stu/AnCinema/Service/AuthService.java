@@ -52,13 +52,16 @@ public class AuthService {
         }
 
         Users user = userOpt.get();
-        System.out.println("DEBUG USER ID TỪ DB: " + user.getId());
+
+        if (Boolean.FALSE.equals(user.getIsActive())) {
+            throw new RuntimeException("Tài khoản của bạn đã bị khóa! Vui lòng liên hệ Admin.");
+        }
+
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Mật khẩu không đúng!");
         }
 
         String token = jwtUtils.generateToken(user);
-
         return new AuthResponse(token, user.getName(), user.getRole(), user.getId());
     }
     public Users register(RegisterRequest request) {

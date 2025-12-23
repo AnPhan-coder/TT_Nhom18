@@ -15,4 +15,6 @@ public interface BookingsRepository extends JpaRepository<Bookings, Integer> {
     List<Bookings> findByUserIdOrderByBookingTimeDesc(Integer userId);
     @Query("SELECT b FROM Bookings b WHERE b.status = :status AND b.bookingTime < :time")
     List<Bookings> findExpiredBookings(@Param("time") LocalDateTime time, @Param("status") BookingStatus status);
+
+    List<Bookings> findByUserId(Integer userId);
 }

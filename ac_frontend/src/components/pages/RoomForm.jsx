@@ -70,34 +70,30 @@ const renderPreview = useMemo(() => {
                 let isHidden = false;
                 let isCouple = false;
 
-                // LOGIC MÔ PHỎNG TỪ BACKEND
                 if (tpl === 'VIP_HALL') {
                     if (r > 3) type = "VIP";
                 } 
                 else if (tpl === 'COUPLE_SWEET') {
                     if (r > rows - 2) {
-                        // Logic ghế đôi: Chỉ hiện ở cột lẻ
                         if (c % 2 !== 0) {
                             type = "COUPLE";
                             isCouple = true;
                         } else {
-                            isHidden = true; // Cột chẵn bị ẩn
+                            isHidden = true; 
                         }
                     } else if (r > rows - 5) {
                         type = "VIP";
                     }
                 }
 
-                if (isHidden) continue; // Bỏ qua ô bị ẩn do ghế đôi đè lên
+                if (isHidden) continue; 
 
-                // Style cho ô preview (nhỏ hơn designer thật)
-                let cellClass = "w-6 h-6 bg-neutral-600 rounded-sm"; // Normal
+                let cellClass = "w-6 h-6 bg-neutral-600 rounded-sm";
                 if (type === "VIP") cellClass = "w-6 h-6 bg-red-600 shadow-[0_0_5px_rgba(220,38,38,0.5)]";
-                if (type === "COUPLE") cellClass = "w-14 h-6 bg-pink-600 shadow-[0_0_5px_rgba(219,39,119,0.5)] col-span-2"; // Rộng hơn
+                if (type === "COUPLE") cellClass = "w-14 h-6 bg-pink-600 shadow-[0_0_5px_rgba(219,39,119,0.5)] col-span-2"; 
 
                 rowCells.push(
                     <div key={`${r}-${c}`} className={`flex items-center justify-center text-[8px] text-white/50 select-none ${cellClass}`}>
-                       {/* Không cần hiện số ghế, chỉ cần màu */}
                     </div>
                 );
             }
@@ -108,7 +104,6 @@ const renderPreview = useMemo(() => {
     return (
         <div className="bg-neutral-800 p-8 rounded-lg max-w-5xl mx-auto border border-neutral-700 mt-10 flex flex-col md:flex-row gap-8">
             
-            {/* CỘT TRÁI: FORM NHẬP LIỆU */}
             <div className="flex-1">
                 <h2 className="text-2xl font-bold text-yellow-500 mb-6">
                     {isEdit ? "Chỉnh Sửa Tên Phòng" : "Thêm Phòng Theo Mẫu"}
@@ -180,13 +175,12 @@ const renderPreview = useMemo(() => {
                 </form>
             </div>
 
-            {/* CỘT PHẢI: PREVIEW LIVE */}
             {!isEdit && (
                 <div className="flex-1 bg-neutral-900 p-6 rounded-lg border border-neutral-800 flex flex-col items-center justify-center min-h-[400px]">
                      <h3 className="text-neutral-500 uppercase tracking-widest text-xs mb-4">Xem trước sơ đồ</h3>
                      
                      <div className="w-full overflow-auto flex justify-center p-4 border border-dashed border-neutral-800 rounded bg-neutral-900/50">
-                        <div className="scale-90 origin-top"> {/* Thu nhỏ lại một chút cho vừa mắt */}
+                        <div className="scale-90 origin-top">
                             {renderPreview}
                         </div>
                      </div>

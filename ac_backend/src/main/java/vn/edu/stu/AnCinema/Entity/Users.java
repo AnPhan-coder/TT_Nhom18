@@ -28,6 +28,9 @@ public class Users {
 
     String role;
 
+    @Column(columnDefinition = "boolean default true")
+    Boolean isActive = true;
+
     @Column(name = "created_at")
     LocalDateTime createdAt;
 

@@ -146,15 +146,12 @@ const SeatDesigner = ({ room, onBack }) => {
   };
 const getAisleColumns = () => {
     const totalCols = room.totalCols;
-    const centerBlock = 8; // Quy tắc: Khối giữa tối đa 8 ghế
+    const centerBlock = 8;
 
-    // Nếu phòng nhỏ hơn hoặc bằng 8 cột thì không cần chia lối đi
     if (totalCols <= centerBlock) return [];
 
     const sideBlock = Math.floor((totalCols - centerBlock) / 2);
     
-    // Lối đi 1: Sau khối bên trái
-    // Lối đi 2: Sau khối giữa (Tức là trước khối bên phải)
     return [sideBlock, sideBlock + centerBlock];
   };
 

@@ -11,7 +11,7 @@ const AdminRoute = () => {
         user = null;
     }
 
-    if (user && user.role && user.role.toUpperCase() === 'ADMIN') {
+    if (user && user.role === 'admin') {
         return <Outlet />;
     }
 
