@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// ... (Giữ nguyên các import Page của bạn) ...
 import HomePage from './components/pages/HomePage';
 import LoginPage from './components/pages/LoginPage';
 import MovieDetail from './components/pages/MovieDetail'; 
@@ -17,15 +16,14 @@ import PaymentPage from './components/pages/PaymentPage';
 import MovieList from './components/pages/MovieList';
 import ManageUsers from './components/pages/ManageUsers';
 import UserProfile from './components/pages/UserProfileMain';
+import PaymentReturn from './components/pages/PaymentReturn';
 
 import Header from './components/Header/Header';
 import Footer from './components/Footer/Footer';
 
-// 1. Tạo một Component con để xử lý Layout
 const AppContent = () => {
-  const location = useLocation(); // Hook này sẽ chạy lại mỗi khi đổi trang
+  const location = useLocation(); 
   
-  // Logic: Ẩn Footer nếu đường dẫn BẮT ĐẦU bằng /admin (bao gồm dashboard, users, movies...)
   const isAdminRoute = location.pathname.startsWith('/admin'); 
 
   return (
@@ -44,23 +42,20 @@ const AppContent = () => {
           
           <Route path="/booking/:showtimeId" element={<BookingPage />} />
           <Route path="/payment/:bookingId" element={<PaymentPage />} />
+          <Route path="/payment-return" element={<PaymentReturn />} />
 
-          {/* Các Route Admin */}
           <Route element={<AdminRoute />}>
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin/users" element={<ManageUsers />} />
-              {/* Thêm các route admin khác vào đây nếu có */}
           </Route>
         </Routes>
       </main>
       
-      {/* Chỉ hiện Footer nếu KHÔNG phải trang Admin */}
       {!isAdminRoute && <Footer />}
     </div>
   );
 };
 
-// 2. Component App chính chỉ chứa Router và bọc AppContent
 function App() {
   return (
     <Router>

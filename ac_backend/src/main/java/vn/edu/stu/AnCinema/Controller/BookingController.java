@@ -1,5 +1,6 @@
 package vn.edu.stu.AnCinema.Controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import vn.edu.stu.AnCinema.Entity.*;
 import vn.edu.stu.AnCinema.Repository.*;
 import vn.edu.stu.AnCinema.Service.BookingService;
+import vn.edu.stu.AnCinema.Service.VNPayService;
 import vn.edu.stu.AnCinema.dto.request.BookingsRequest;
 import vn.edu.stu.AnCinema.dto.response.ApiResponse;
 import vn.edu.stu.AnCinema.dto.response.SeatResponse;
@@ -21,7 +23,7 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class BookingController {
     BookingService bookingService;
-
+    VNPayService vnPayService;
     @GetMapping("/{id}")
     public ApiResponse<Bookings> getBookingDetail(@PathVariable Integer id) {
         String currentEmail = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -69,6 +71,22 @@ public class BookingController {
         bookingService.cancelBooking(id, currentEmail);
         return ApiResponse.<String>builder()
                 .message("Đã hủy giữ ghế thành công.")
+                .build();
+    }
+    @PostMapping("/payment/vnpay/{id}")
+    public ApiResponse<String> createVNPayUrl(@PathVariable Integer id, HttpServletRequest request) {
+        String url = vnPayService.createPaymentUrl(id, request);
+        return ApiResponse.<String>builder()
+                .result(url)
+                .message("Tạo link VNPay thành công")
+                .build();
+    }
+    @GetMapping("/payment/vnpay-callback")
+    public ApiResponse<Integer> vnpayCallback(HttpServletRequest request) {
+        int status = vnPayService.orderReturn(request);
+        return ApiResponse.<Integer>builder()
+                .result(status)
+                .message(status == 1 ? "Thanh toán thành công" : "Thanh toán thất bại")
                 .build();
     }
 }

@@ -50,7 +50,7 @@ public class JwtUtils {
         return extractAllClaims(token).get("role", String.class);
     }
 
-    public boolean validateToken(String token, Users user) { // Hoặc so sánh với UserDetails
+    public boolean validateToken(String token, Users user) {
         final String username = extractUsername(token);
         return (username.equals(user.getEmail()) && !isTokenExpired(token));
     }

@@ -40,3 +40,8 @@ server:
   port: 8080
 jwt:
   signerKey: "50da0747a041f8350431dcfef529e84e032e92c3909695e446b27e10e4ebb781"
+vnpay:
+  tmn-code: "R46NO06T"
+  hash-secret: "UXO2YZ0513GKEUHX8WKFBS21KYA9WMIN"
+  url: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+  return-url: "http://localhost:5173/payment-return"
