@@ -3,7 +3,7 @@ import axiosClient from "../../api/axiosClient";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import { format } from "date-fns";
-import { Calendar, Clock, Plus, Trash2, Search, Armchair } from "lucide-react";
+import { Calendar, Plus, Trash2, Search, Armchair } from "lucide-react";
 import ShowtimeForm from "./ShowtimeForm";
 
 const ManageShowtimes = () => {
@@ -155,7 +155,7 @@ const ManageShowtimes = () => {
           </div>
           <button
             onClick={() => setView("CREATE")}
-            className="bg-yellow-500 text-neutral-900 px-6 py-2.5 rounded-lg font-bold hover:bg-yellow-400 flex items-center gap-2 shadow-lg hover:translate-y-[-2px] transition-all whitespace-nowrap"
+            className="bg-yellow-500 text-neutral-900 px-6 py-2.5 rounded-lg font-bold hover:bg-yellow-400 flex items-center gap-2 shadow-lg hover:translate-y-0.5 transition-all whitespace-nowrap"
           >
             <Plus size={20} /> Tạo Lịch Mới
           </button>
@@ -276,7 +276,7 @@ const ManageShowtimes = () => {
                                   </div>
                                 </div>
 
-                                <div className="absolute bottom-4 right-4 bg-neutral-900/80 border border-neutral-600 rounded px-2 py-1.5 min-w-[80px] text-center backdrop-blur-sm">
+                                <div className="absolute bottom-4 right-4 bg-neutral-900/80 border border-neutral-600 rounded px-2 py-1.5 min-w-20 text-center backdrop-blur-sm">
                                   <div className="text-[10px] text-neutral-400 flex items-center justify-center gap-1 mb-0.5">
                                     <Armchair size={10} /> Ghế trống
                                   </div>
