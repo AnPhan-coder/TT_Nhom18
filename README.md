@@ -2,7 +2,7 @@
 
 # ANCINEMA - Hệ thống Đặt vé Xem phim Online
 
-![ANCINEMA Banner](![alt text](image.png))
+[alt text](image.png)
 
 ## 📝 Giới thiệu
 
