@@ -1,10 +1,12 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'; // Import useLocation
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import HomePage from './components/pages/HomePage';
 import LoginPage from './components/pages/LoginPage';
+import MoviesPage from "./components/pages/MoviesPage"; 
+import ShowtimePage from "./components/pages/ShowtimePage";
 import MovieDetail from './components/pages/MovieDetail'; 
 import BookingPage from './components/pages/BookingPage';
 import ScrollToTop from './components/pages/ScrollToTop';
@@ -13,7 +15,6 @@ import ForgotPasswordPage from './components/pages/ForgotPasswordPage';
 import AdminRoute from './components/pages/AdminRoute';
 import AdminDashboard from './components/pages/AdminDashboard';
 import PaymentPage from './components/pages/PaymentPage';
-import MovieList from './components/pages/MovieList';
 import ManageUsers from './components/pages/ManageUsers';
 import UserProfile from './components/pages/UserProfileMain';
 import PaymentReturn from './components/pages/PaymentReturn';
@@ -30,7 +31,7 @@ const AppContent = () => {
     <div className="App min-h-screen flex flex-col font-body">
       <Header />
       
-      <main className="flex-grow">
+      <main className="grow">
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -38,8 +39,9 @@ const AppContent = () => {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/movie/:id" element={<MovieDetail />} />
           <Route path="/profile" element={<UserProfile />} />
-          <Route path="/movies" element={<MovieList />} />
-          
+          <Route path="/movies" element={<MoviesPage />} />
+          <Route path="/schedule" element={<ShowtimePage />} />
+
           <Route path="/booking/:showtimeId" element={<BookingPage />} />
           <Route path="/payment/:bookingId" element={<PaymentPage />} />
           <Route path="/payment-return" element={<PaymentReturn />} />

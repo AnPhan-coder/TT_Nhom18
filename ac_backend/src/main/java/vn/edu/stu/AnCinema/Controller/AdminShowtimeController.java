@@ -45,10 +45,10 @@ public class AdminShowtimeController {
 
     @PostMapping("/auto-generate")
     @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<String> autoGenerate(@RequestBody ShowtimeRequest request) {
-        String result = showtimeService.autoCreateShowtimes(request);
-        return ApiResponse.<String>builder()
-                .message(result)
+    public ApiResponse<List<Showtimes>> autoGenerate(@RequestBody ShowtimeRequest request) {
+        return ApiResponse.<List<Showtimes>>builder()
+                .result(showtimeService.autoCreateShowtimes(request))
+                .message("Xử lý tự động sinh lịch hoàn tất")
                 .build();
     }
 }

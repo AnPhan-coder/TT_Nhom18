@@ -2,20 +2,25 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import RoomForm from "./RoomForm";
 import SeatDesigner from "./SeatDesigner";
-import { toast } from "react-toastify";
 import Swal from "sweetalert2";
+import { useApiCall } from "../../hooks/useApiCall";
+import { LoadingSkeleton } from "./LoadingSpinner";
+import { Monitor, Plus, Trash2, Edit, Grid3X3, Armchair } from "lucide-react";
+
 const ManageRooms = () => {
   const [rooms, setRooms] = useState([]);
   const [view, setView] = useState("LIST");
   const [selectedRoom, setSelectedRoom] = useState(null);
 
+  const { loading, execute } = useApiCall();
+
   const loadRooms = async () => {
-    try {
-      const res = await axios.get("http://localhost:8080/api/rooms");
-      setRooms(res.data.result || []);
-    } catch (error) {
-      console.error(error);
-    }
+    await execute(() => axios.get("http://localhost:8080/api/rooms"), {
+      onSuccess: (res) => {
+        setRooms(res.data.result || []);
+      },
+      errorMessage: "Lỗi tải danh sách phòng",
+    });
   };
 
   useEffect(() => {
@@ -23,37 +28,28 @@ const ManageRooms = () => {
   }, []);
 
   const handleDeleteRoom = async (id, name) => {
-    Swal.fire({
+    const result = await Swal.fire({
       title: `Xóa phòng ${name}?`,
       text: "Hành động này không thể hoàn tác! Toàn bộ ghế sẽ bị xóa.",
       icon: "warning",
-      background: "#171717", 
+      background: "#171717",
       color: "#fff",
       showCancelButton: true,
-      confirmButtonColor: "#d33",
+      confirmButtonColor: "#dc2626",
       cancelButtonColor: "#404040",
-      confirmButtonText: "Vâng, xóa nó!",
+      confirmButtonText: "Xóa ngay",
       cancelButtonText: "Hủy",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          await axios.delete(`http://localhost:8080/api/rooms/${id}`);
-          
-          Swal.fire({
-            title: "Đã xóa!",
-            text: "Phòng chiếu đã bị xóa.",
-            icon: "success",
-            background: "#171717",
-            color: "#fff",
-            confirmButtonColor: "#EAB308",
-          });
-          
-          loadRooms(); 
-        } catch (error) {
-          toast.error("Lỗi: " + (error.response?.data?.message || "Lỗi server"));
-        }
-      }
     });
+
+    if (result.isConfirmed) {
+      await execute(
+        () => axios.delete(`http://localhost:8080/api/rooms/${id}`),
+        {
+          successMessage: "Đã xóa phòng thành công!",
+          onSuccess: () => loadRooms(),
+        }
+      );
+    }
   };
 
   const handleEditRoom = (room) => {
@@ -87,61 +83,96 @@ const ManageRooms = () => {
   }
 
   return (
-    <div className="p-8 text-white w-full"> 
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-yellow-500">Quản Lý Phòng Chiếu</h2>
+    <div className="p-4 md:p-8 text-white w-full font-body">
+      <div className="flex justify-between items-center mb-8 border-b border-neutral-800 pb-6">
+        <div>
+          <h2 className="text-2xl font-display font-bold text-white uppercase tracking-tight flex items-center gap-3">
+            <span className="p-2 bg-red-600/10 rounded-lg text-red-500 border border-red-600/20">
+              <Monitor size={24} />
+            </span>
+            Quản Lý Phòng Chiếu
+          </h2>
+          <p className="text-neutral-500 text-sm mt-1">
+            Quản lý sơ đồ và kích thước phòng chiếu
+          </p>
+        </div>
         <button
-          onClick={() => { setSelectedRoom(null); setView("CREATE"); }}
-          className="bg-yellow-500 text-neutral-900 px-4 py-2 rounded font-bold hover:bg-yellow-400"
+          onClick={() => {
+            setSelectedRoom(null);
+            setView("CREATE");
+          }}
+          className="bg-red-600 text-white px-5 py-2.5 rounded-lg font-bold hover:bg-red-700 flex items-center gap-2 transition-all active:scale-95"
         >
-          + Thêm Phòng Mới
+          <Plus size={20} /> Thêm Phòng
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {rooms.map((room) => (
-          <div
-            key={room.id}
-            className="bg-neutral-800 p-6 rounded-lg border border-neutral-700 hover:border-yellow-500 transition-colors flex flex-col justify-between"
-          >
-            <div>
-              <h3 className="text-xl font-bold mb-2 truncate text-yellow-500" title={room.name}>
-                {room.name}
-              </h3>
-              <p className="text-neutral-400 mb-4 text-sm">
-                Rạp: {room.cinema?.name || "AnCinema Center"} <br />
-                Kích thước: <span className="text-white font-bold">{room.totalRows} hàng x {room.totalCols} cột</span>
-                <br/>
-                Tổng ghế: {room.totalRows * room.totalCols}
-              </p>
-            </div>
+      {loading ? (
+        <LoadingSkeleton count={3} />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {rooms.map((room) => (
+            <div
+              key={room.id}
+              className="group bg-neutral-800/50 p-6 rounded-xl border border-neutral-800 hover:border-red-500/30 transition-all flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex justify-between items-start mb-4">
+                  <h3
+                    className="text-xl font-bold font-display text-white group-hover:text-red-500 transition-colors truncate"
+                    title={room.name}
+                  >
+                    {room.name}
+                  </h3>
+                </div>
 
-            <div className="flex gap-2 mt-4">
-              <button
-                onClick={() => handleEditRoom(room)}
-                className="px-3 py-2 bg-neutral-700 rounded hover:bg-neutral-600 text-xs font-bold"
-              >
-                ✏️ Sửa Tên
-              </button>
-              <button
-                onClick={() => handleDeleteRoom(room.id, room.name)}
-                className="px-3 py-2 bg-red-900/50 text-red-400 rounded hover:bg-red-900 text-xs font-bold"
-              >
-                🗑 Xóa
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedRoom(room);
-                  setView("DESIGN");
-                }}
-                className="flex-1 bg-blue-600 py-2 rounded hover:bg-blue-500 font-bold text-xs"
-              >
-                ⚙️ Thiết kế ghế
-              </button>
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="bg-neutral-900 p-3 rounded border border-neutral-700">
+                    <p className="text-neutral-500 text-xs uppercase mb-1 flex items-center gap-1">
+                      <Grid3X3 size={12} /> Kích thước
+                    </p>
+                    <p className="font-mono text-white font-bold">
+                      {room.totalRows} x {room.totalCols}
+                    </p>
+                  </div>
+                  <div className="bg-neutral-900 p-3 rounded border border-neutral-700">
+                    <p className="text-neutral-500 text-xs uppercase mb-1 flex items-center gap-1">
+                      <Armchair size={12} /> Tổng ghế
+                    </p>
+                    <p className="font-mono text-white font-bold">
+                      {room.totalRows * room.totalCols}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-neutral-700/50">
+                <button
+                  onClick={() => handleEditRoom(room)}
+                  className="px-3 py-2 bg-neutral-700 text-neutral-300 rounded hover:bg-white hover:text-black font-bold transition-colors flex items-center gap-2 text-sm"
+                >
+                  <Edit size={14} /> Sửa
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedRoom(room);
+                    setView("DESIGN");
+                  }}
+                  className="flex-1 bg-neutral-700 text-white py-2 rounded hover:bg-red-600 font-bold text-sm transition-colors border border-neutral-600 hover:border-red-600"
+                >
+                  Thiết kế ghế
+                </button>
+                <button
+                  onClick={() => handleDeleteRoom(room.id, room.name)}
+                  className="px-3 py-2 bg-neutral-800 text-neutral-500 rounded hover:bg-red-600 hover:text-white border border-neutral-700 transition-colors"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

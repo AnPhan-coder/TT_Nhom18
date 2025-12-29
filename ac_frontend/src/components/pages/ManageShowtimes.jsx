@@ -1,49 +1,80 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axiosClient from "../../api/axiosClient";
-import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import { format } from "date-fns";
-import { Calendar, Plus, Trash2, Search, Armchair } from "lucide-react";
+import { Calendar, Plus, Trash2, Search, Armchair, Film } from "lucide-react";
 import ShowtimeForm from "./ShowtimeForm";
+import { useApiCall } from "../../hooks/useApiCall";
+import { LoadingSkeleton } from "./LoadingSpinner";
 
 const ManageShowtimes = () => {
   const [view, setView] = useState("LIST");
+  const [expandedMovieId, setExpandedMovieId] = useState(null);
+
   const [showtimes, setShowtimes] = useState([]);
   const [movies, setMovies] = useState([]);
   const [rooms, setRooms] = useState([]);
-  const [expandedMovieId, setExpandedMovieId] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [loading, setLoading] = useState(false);
   const [searchDate, setSearchDate] = useState(
     new Date().toISOString().split("T")[0]
   );
+
+  const { loading: loadingData, execute: fetchData } = useApiCall();
+  const { execute: executeDelete } = useApiCall();
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
     }, 300);
-    loadData();
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  useEffect(() => {
+    loadData();
+  }, []);
+
   const loadData = async () => {
-    setLoading(true);
-    try {
-      const [resMovies, resRooms, resShows] = await Promise.all([
-        axiosClient.get("/movies"),
-        axiosClient.get("/rooms"),
-        axiosClient.get("/admin/showtimes"),
-      ]);
-      setMovies(resMovies.data.result || resMovies.data || []);
-      setRooms(resRooms.data.result || []);
-      setShowtimes(resShows.data.result || []);
-    } catch (error) {
-      toast.error("Lỗi tải dữ liệu: " + error.message);
-    } finally {
-      setLoading(false);
-    }
+    await fetchData(
+      async () => {
+        const [resMovies, resRooms, resShows] = await Promise.all([
+          axiosClient.get("/movies"),
+          axiosClient.get("/rooms"),
+          axiosClient.get("/admin/showtimes"),
+        ]);
+
+        setMovies(resMovies.data.result || resMovies.data || []);
+        setRooms(resRooms.data.result || []);
+        setShowtimes(resShows.data.result || []);
+      },
+      { showErrorToast: true }
+    );
+  };
+
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: "Xác nhận xóa?",
+      text: "Hành động này không thể hoàn tác!",
+      icon: "warning",
+      background: "#171717",
+      color: "#fff",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#404040",
+      confirmButtonText: "Xóa ngay",
+      cancelButtonText: "Hủy",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        await executeDelete(
+          async () => await axiosClient.delete(`/admin/showtimes/${id}`),
+          {
+            successMessage: "Đã xóa suất chiếu thành công!",
+            onSuccess: () => loadData(),
+          }
+        );
+      }
+    });
   };
 
   const groupedShowtimes = useMemo(() => {
@@ -64,57 +95,28 @@ const ManageShowtimes = () => {
       } else {
         if (!isDateMatch) return;
       }
-      const mId = show.movie.id;
+
+      const mId = show.movie?.id;
+      if (!mId) return;
+
       if (!groups[mId]) {
         groups[mId] = { movie: show.movie, shows: [] };
       }
       groups[mId].shows.push(show);
     });
     return Object.values(groups);
-  }, [showtimes, searchDate, debouncedSearchTerm]);
+  }, [showtimes, searchDate, debouncedSearchTerm, searchTerm]);
 
-  const handleDelete = (id) => {
-    Swal.fire({
-      title: "Xóa suất chiếu này?",
-      icon: "warning",
-      background: "#171717",
-      color: "#fff",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      confirmButtonText: "Xóa",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          await axiosClient.delete(`/admin/showtimes/${id}`);
-          toast.success("Đã xóa!");
-          loadData();
-        } catch (err) {
-          toast.error("Lỗi xóa");
-        }
-      }
-    });
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-500"></div>
-          <p className="text-white mt-4">Đang tải dữ liệu...</p>
-        </div>
-      </div>
-    );
-  }
-  
   if (view === "CREATE") {
     return (
-      <div className="p-8 max-w-6xl mx-auto min-h-screen">
+      <div className="p-4 md:p-8 max-w-6xl mx-auto min-h-screen animate-fade-in">
         <ShowtimeForm
           movies={movies}
           rooms={rooms}
           allShowtimes={showtimes}
           onBack={() => setView("LIST")}
           onSuccess={() => {
+            setView("LIST");
             loadData();
           }}
         />
@@ -123,55 +125,75 @@ const ManageShowtimes = () => {
   }
 
   return (
-    <div className="p-8 text-white max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-        <h2 className="text-2xl font-bold text-yellow-500 uppercase tracking-widest flex items-center gap-2">
-          <Calendar /> Quản Lý Lịch Chiếu
-        </h2>
+    <div className="p-4 md:p-8 text-white max-w-7xl mx-auto font-body">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-neutral-800 pb-6">
+        <div>
+          <h2 className="text-2xl font-display font-bold text-white uppercase tracking-tight flex items-center gap-3">
+            <span className="p-2 bg-red-600/10 rounded-lg text-red-500 border border-red-600/20">
+              <Calendar size={24} />
+            </span>
+            Quản Lý Lịch Chiếu
+          </h2>
+          <p className="text-neutral-500 text-sm mt-1">
+            Sắp xếp và điều chỉnh thời gian chiếu phim
+          </p>
+        </div>
 
-        <div className="flex items-center gap-4 flex-wrap justify-end">
-          <div className="relative">
+        <div className="flex items-center gap-3 flex-wrap w-full md:w-auto">
+          <div className="relative group flex-1 md:flex-none">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search size={18} className="text-neutral-400" />
+              <Search
+                size={18}
+                className="text-neutral-500 group-focus-within:text-red-500 transition-colors"
+              />
             </div>
             <input
               type="text"
-              placeholder="Tìm theo tên phim..."
+              placeholder="Tìm phim..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-neutral-800 border border-neutral-700 text-white text-sm rounded-lg focus:border-yellow-500 block w-48 pl-10 p-2.5 outline-none"
+              className="bg-neutral-900 border border-neutral-700 text-white text-sm rounded-lg focus:border-red-500 block w-full md:w-56 pl-10 p-2.5 outline-none transition-all placeholder:text-neutral-600"
             />
           </div>
 
-          <div className="relative">
+          <div className="relative flex-1 md:flex-none">
             <input
               type="date"
               value={searchDate}
               onChange={(e) => setSearchDate(e.target.value)}
               disabled={searchTerm.length > 0}
-              className={`bg-neutral-800 border border-neutral-700 text-white text-sm rounded-lg focus:border-yellow-500 block w-full p-2.5 outline-none 
-          ${searchTerm.length > 0 ? "opacity-50 cursor-not-allowed" : ""}`}
+              className={`bg-neutral-900 border border-neutral-700 text-white text-sm rounded-lg focus:border-red-500 block w-full p-2.5 outline-none transition-all
+                ${
+                  searchTerm.length > 0
+                    ? "opacity-40 cursor-not-allowed"
+                    : "cursor-pointer"
+                }`}
             />
           </div>
+
           <button
             onClick={() => setView("CREATE")}
-            className="bg-yellow-500 text-neutral-900 px-6 py-2.5 rounded-lg font-bold hover:bg-yellow-400 flex items-center gap-2 shadow-lg hover:translate-y-0.5 transition-all whitespace-nowrap"
+            className="bg-red-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-yellow-600 flex items-center gap-2 transition-all active:scale-95 whitespace-nowrap"
           >
-            <Plus size={20} /> Tạo Lịch Mới
+            <Plus size={20} />{" "}
+            <span className="hidden sm:inline">Tạo Lịch</span>
           </button>
         </div>
       </div>
 
       <div className="space-y-4">
-        {groupedShowtimes.length === 0 ? (
-          <div className="text-center p-12 bg-neutral-800 rounded-lg border border-dashed border-neutral-700 text-neutral-500">
-            Không tìm thấy lịch chiếu phù hợp.
+        {loadingData ? (
+          <LoadingSkeleton count={3} />
+        ) : groupedShowtimes.length === 0 ? (
+          <div className="text-center py-16 bg-neutral-800/30 rounded-xl border border-dashed border-neutral-700 text-neutral-500">
+            <Film size={48} className="mx-auto mb-3 opacity-20" />
+            <p>Không tìm thấy lịch chiếu nào phù hợp.</p>
           </div>
         ) : (
           groupedShowtimes.map((group) => (
             <div
               key={group.movie.id}
-              className="bg-neutral-800 rounded-lg border border-neutral-700 overflow-hidden mb-6 shadow-lg"
+              className="bg-neutral-800/50 rounded-xl border border-neutral-800 overflow-hidden hover:border-neutral-700 transition-colors"
             >
               <div
                 onClick={() =>
@@ -179,27 +201,29 @@ const ManageShowtimes = () => {
                     expandedMovieId === group.movie.id ? null : group.movie.id
                   )
                 }
-                className="p-5 flex justify-between items-start cursor-pointer hover:bg-neutral-700/30 transition-colors border-b border-neutral-700/50"
+                className="p-4 flex justify-between items-center cursor-pointer hover:bg-neutral-800 transition-colors select-none"
               >
-                <div className="flex gap-5">
-                  <img
-                    src={group.movie.posterUrl || "/placeholder.jpg"}
-                    alt={group.movie.title || "Poster"}
-                    onError={(e) => {
-                      e.target.src = "/placeholder.jpg";    
-                    }}
-                    className="w-16 h-24 object-cover rounded-md shadow-md border border-neutral-600"
-                  />
+                <div className="flex items-center gap-4">
+                  <div className="relative w-12 h-16 rounded overflow-hidden bg-neutral-900 border border-neutral-700 shrink-0">
+                    <img
+                      src={group.movie.posterUrl}
+                      alt="poster"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.src = "https://via.placeholder.com/150";
+                      }}
+                    />
+                  </div>
                   <div>
-                    <h3 className="text-xl font-bold text-white uppercase tracking-wide mb-1">
+                    <h3 className="text-lg font-bold text-neutral-200 line-clamp-1">
                       {group.movie.title}
                     </h3>
-                    <div className="flex items-center gap-3 text-sm text-neutral-400">
-                      <span className="bg-neutral-700 px-2 py-0.5 rounded text-xs text-white">
+                    <div className="flex items-center gap-3 text-xs text-neutral-500 mt-1">
+                      <span className="bg-neutral-700/50 px-2 py-0.5 rounded text-neutral-300">
                         {group.movie.duration} phút
                       </span>
                       <span>•</span>
-                      <span className="text-yellow-500 font-bold">
+                      <span className="text-red-500 font-medium">
                         {group.shows.length} suất chiếu
                       </span>
                     </div>
@@ -211,12 +235,12 @@ const ManageShowtimes = () => {
                     expandedMovieId === group.movie.id ? "rotate-180" : ""
                   }`}
                 >
-                  ▼
+                  <ChevronDownIcon />
                 </div>
               </div>
 
               {expandedMovieId === group.movie.id && (
-                <div className="p-5 bg-neutral-900/50">
+                <div className="p-4 bg-neutral-900/30 border-t border-neutral-800">
                   {Object.entries(
                     group.shows.reduce((acc, show) => {
                       const date = show.startTime
@@ -230,18 +254,16 @@ const ManageShowtimes = () => {
                     .sort(
                       ([dateA], [dateB]) => new Date(dateA) - new Date(dateB)
                     )
-
                     .map(([date, showsInDate]) => (
-                      <div key={date} className="mb-8 last:mb-0">
-                        <h4 className="text-neutral-400 text-sm font-bold border-b border-neutral-700 pb-2 mb-4 flex items-center gap-2">
-                          <Calendar size={16} />
-                          Ngày {format(new Date(date), "dd/MM/yyyy")}
-                          <span className="text-neutral-600 font-normal ml-2 text-xs">
-                            ({showsInDate.length} suất)
+                      <div key={date} className="mb-6 last:mb-0">
+                        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-neutral-800">
+                          <Calendar size={14} className="text-red-500" />
+                          <span className="text-sm font-semibold text-neutral-300">
+                            {format(new Date(date), "dd/MM/yyyy")}
                           </span>
-                        </h4>
+                        </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                           {showsInDate
                             .sort(
                               (a, b) =>
@@ -250,13 +272,13 @@ const ManageShowtimes = () => {
                             .map((show) => (
                               <div
                                 key={show.id}
-                                className="relative bg-neutral-800 p-4 rounded-lg border border-neutral-700 group hover:border-yellow-500/50 hover:bg-neutral-750 transition-all shadow-sm"
+                                className="group relative bg-neutral-800 p-3 rounded-lg border border-neutral-700 hover:border-red-500/50 hover:bg-neutral-800 transition-all"
                               >
-                                <div className="flex items-end gap-2 mb-3">
-                                  <span className="text-2xl font-bold text-yellow-500 leading-none">
+                                <div className="flex items-baseline gap-1.5 mb-2">
+                                  <span className="text-xl font-bold text-red-500 font-display">
                                     {format(new Date(show.startTime), "HH:mm")}
                                   </span>
-                                  <span className="text-xs text-neutral-500 mb-1">
+                                  <span className="text-[10px] text-neutral-500">
                                     →{" "}
                                     {show.endTime
                                       ? format(new Date(show.endTime), "HH:mm")
@@ -264,29 +286,21 @@ const ManageShowtimes = () => {
                                   </span>
                                 </div>
 
-                                <div className="mb-4">
+                                <div className="mb-2">
                                   <div
-                                    className="text-white font-bold uppercase text-sm truncate"
+                                    className="text-white text-xs font-medium truncate"
                                     title={show.room.name}
                                   >
                                     {show.room.name}
                                   </div>
-                                  <div className="text-xs text-neutral-500 mt-1">
-                                    {show.room.cinema?.name || "Rạp chính"}
-                                  </div>
                                 </div>
 
-                                <div className="absolute bottom-4 right-4 bg-neutral-900/80 border border-neutral-600 rounded px-2 py-1.5 min-w-20 text-center backdrop-blur-sm">
-                                  <div className="text-[10px] text-neutral-400 flex items-center justify-center gap-1 mb-0.5">
-                                    <Armchair size={10} /> Ghế trống
-                                  </div>
-                                  <div className="font-mono text-sm">
-                                    <span className="text-red-500 font-bold">
-                                      {show.notBooked || 0}
-                                    </span>
-                                    <span className="text-neutral-500 text-xs">
-                                      {" "}
-                                      / {show.totalSeats || 0}
+                                <div className="flex items-center justify-between mt-auto pt-2 border-t border-neutral-700/50">
+                                  <div className="flex items-center gap-1 text-[10px] text-neutral-400">
+                                    <Armchair size={10} />
+                                    <span>
+                                      {show.notBooked || 0}/
+                                      {show.totalSeats || 0}
                                     </span>
                                   </div>
                                 </div>
@@ -296,10 +310,10 @@ const ManageShowtimes = () => {
                                     e.stopPropagation();
                                     handleDelete(show.id);
                                   }}
-                                  className="absolute top-3 right-3 p-2 text-neutral-600 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-all opacity-0 group-hover:opacity-100"
-                                  title="Xóa suất chiếu này"
+                                  className="absolute -top-2 -right-2 bg-neutral-800 text-neutral-400 hover:text-red-500 hover:bg-neutral-700 border border-neutral-700 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all scale-90 hover:scale-100"
+                                  title="Xóa suất chiếu"
                                 >
-                                  <Trash2 size={16} />
+                                  <Trash2 size={14} />
                                 </button>
                               </div>
                             ))}
@@ -315,5 +329,21 @@ const ManageShowtimes = () => {
     </div>
   );
 };
+
+const ChevronDownIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+);
 
 export default ManageShowtimes;

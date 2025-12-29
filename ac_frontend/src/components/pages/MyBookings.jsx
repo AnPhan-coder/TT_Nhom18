@@ -1,163 +1,167 @@
+// src/pages/Profile/MyBookings.jsx
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
-import { format } from "date-fns";
-import { Eye, MapPin, Calendar, X } from "lucide-react";
+import { Calendar, Clock, MapPin, QrCode, CreditCard, XCircle, AlertCircle } from "lucide-react";
+import Swal from "sweetalert2";
 
 const MyBookings = ({ user }) => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [activeTab, setActiveTab] = useState("ALL"); // ALL, PAID, PENDING, CANCELLED
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchHistory = async () => {
+    if (!user) return;
+    const fetchBookings = async () => {
       try {
         const res = await axiosClient.get(`/bookings/my-bookings?userId=${user.id}`);
+        // Đảm bảo lấy đúng mảng dữ liệu
         setBookings(res.data.result || res.data || []);
       } catch (error) {
-        console.error("Lỗi fetch history", error);
+        console.error("Lỗi tải vé:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchHistory();
-  }, [user.id]);
+    fetchBookings();
+  }, [user]);
 
+  // Hàm lọc vé theo Tab
+  const getFilteredBookings = () => {
+    if (activeTab === "ALL") return bookings;
+    // Lưu ý: So sánh status phải khớp với Enum Backend (thường là uppercase hoặc lowercase)
+    return bookings.filter(b => b.status?.toLowerCase() === activeTab.toLowerCase());
+  };
+
+  // Hàm mở QR Code
+  const handleShowQR = (booking) => {
+    const qrData = `BOOKING_ID:${booking.id}`; // Dữ liệu để tạo QR
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}`;
+
+    Swal.fire({
+      title: "Mã Vé Check-in",
+      html: `
+        <div class="flex flex-col items-center">
+            <p class="mb-4 text-sm">Đưa mã này cho nhân viên soát vé</p>
+            <img src="${qrUrl}" alt="QR Code" class="border-4 border-white rounded-lg shadow-lg" />
+            <p class="mt-4 font-bold text-xl text-yellow-500">Mã: ${booking.id}</p>
+        </div>
+      `,
+      background: "#171717",
+      color: "#fff",
+      showConfirmButton: false,
+      showCloseButton: true
+    });
+  };
+
+  const formatDate = (dateString) => new Date(dateString).toLocaleString("vi-VN");
   const formatCurrency = (val) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(val);
 
-  if (loading) return <p className="text-neutral-400">Đang tải dữ liệu...</p>;
+  if (loading) return <div className="text-center py-10 text-neutral-500">Đang tải dữ liệu vé...</div>;
+
+  const filteredData = getFilteredBookings();
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-yellow-500 mb-6 uppercase tracking-wider border-b border-neutral-700 pb-4">
-        Lịch sử đặt vé
+      <h2 className="text-2xl font-bold font-display text-white mb-6 border-l-4 border-red-600 pl-4">
+        Lịch Sử Đặt Vé
       </h2>
 
-      <div className="space-y-4">
-        {bookings.length === 0 ? (
-          <div className="text-center py-10 text-neutral-500 italic">Chưa có giao dịch nào.</div>
-        ) : (
-          bookings.map((booking) => (
-            <div key={booking.id} className="bg-neutral-900 border border-neutral-700 rounded-lg p-4 flex flex-col md:flex-row gap-4 hover:border-yellow-500 transition-all group">
-              <img 
-                src={booking.showtime?.movie?.posterUrl || "/placeholder.jpg"} 
-                alt="Poster"
-                className="w-24 h-36 object-cover rounded shadow-md border border-neutral-800"
-                onError={(e) => e.target.src = "https://via.placeholder.com/150x200?text=No+Image"}
-              />
-              
-              <div className="flex-1 flex flex-col justify-between">
-                <div>
-                   <h3 className="text-xl font-bold text-white mb-2 group-hover:text-yellow-500 transition-colors">
-                      {booking.showtime?.movie?.title || "Tên phim"}
-                   </h3>
-                   <div className="text-sm text-neutral-400 space-y-1">
-                      <p className="flex items-center gap-2">
-                        <MapPin size={14}/> {booking.showtime?.room?.cinema?.name || "Rạp"} - {booking.showtime?.room?.name}
-                      </p>
-                      <p className="flex items-center gap-2">
-                        <Calendar size={14}/> Ngày đặt: {format(new Date(booking.bookingTime), "dd/MM/yyyy HH:mm")}
-                      </p>
-                      <p className="font-bold text-white mt-2">Tổng tiền: {formatCurrency(booking.totalPrice)}</p>
-                   </div>
-                </div>
-                
-                <div className="mt-4 flex justify-between items-end">
-                    <span className={`px-3 py-1 rounded text-xs font-bold uppercase ${booking.status === 'paid' ? 'bg-green-900/30 text-green-500 border border-green-800' : 'bg-red-900/30 text-red-500 border border-red-800'}`}>
-                        {booking.status === 'paid' ? "Đã thanh toán" : "Chờ thanh toán"}
-                    </span>
-                    <button 
-                        onClick={() => setSelectedTicket(booking)}
-                        className="bg-neutral-700 hover:bg-neutral-600 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2 transition-colors"
-                    >
-                        <Eye size={16}/> Xem chi tiết
-                    </button>
-                </div>
-              </div>
-            </div>
-          ))
-        )}
+      {/* --- TABS --- */}
+      <div className="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-neutral-700">
+        {[
+            { id: "ALL", label: "Tất cả" },
+            { id: "PENDING", label: "Chờ thanh toán" }, // Backend: UNPAID/PENDING
+            { id: "PAID", label: "Đã thanh toán" },
+            { id: "CANCELLED", label: "Đã hủy" } // Backend: CANCELLED
+        ].map((tab) => (
+            <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${
+                    activeTab === tab.id 
+                    ? "bg-red-600 text-white" 
+                    : "bg-neutral-800 text-neutral-400 hover:bg-neutral-700"
+                }`}
+            >
+                {tab.label}
+            </button>
+        ))}
       </div>
 
-      {selectedTicket && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 animate-fadeIn">
-            <div className="bg-[#Fdfbf7] text-neutral-900 w-full max-w-2xl rounded-sm shadow-2xl overflow-hidden relative">
-                
-                <button 
-                    onClick={() => setSelectedTicket(null)}
-                    className="absolute top-2 right-2 p-2 bg-neutral-200 hover:bg-neutral-300 rounded-full z-10"
-                >
-                    <X size={20}/>
-                </button>
-
-                <div className="bg-red-600 text-white p-4 flex justify-between items-center">
-                    <h3 className="font-bold text-lg uppercase">Thông Tin Giao Dịch</h3>
-                    <div className="bg-red-700 px-3 py-1 rounded text-sm font-bold cursor-pointer hover:bg-red-800">In vé</div>
-                </div>
-
-                <div className="p-8">
-                    <div className="mb-6 text-sm text-neutral-600 uppercase font-bold">
-                        Ngày đặt vé: {format(new Date(selectedTicket.bookingTime), "dd 'tháng' MM 'năm' yyyy")}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                        <div>
-                            <h4 className="font-bold text-lg mb-2 text-neutral-800">Người đặt vé</h4>
-                            <p className="font-bold text-neutral-700">{user.name}</p>
-                            <p className="text-neutral-500 text-sm">{user.email}</p>
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-lg mb-2 text-neutral-800">Thanh toán</h4>
-                            <p className="text-neutral-600 uppercase font-medium">
-                                {selectedTicket.paymentMethod || "MOMO / VNPAY / TIỀN MẶT"}
-                            </p>
-                            <p className="text-xs text-neutral-400 mt-1">Mã GD: #{selectedTicket.id}</p>
-                        </div>
-                    </div>
-
-                    <div className="bg-neutral-800 text-white font-bold p-3 uppercase text-sm tracking-wide text-center">
-                        Chi Tiết Vé
-                    </div>
-
-                    <div className="border border-neutral-300">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-neutral-100 border-b border-neutral-300 text-neutral-600">
-                                <tr>
-                                    <th className="p-3">Phim</th>
-                                    <th className="p-3">Suất chiếu</th>
-                                    <th className="p-3 text-right">Ghế</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td className="p-3 align-top font-bold text-neutral-800 w-1/3">
-                                        {selectedTicket.showtime?.movie?.title}
-                                    </td>
-                                    <td className="p-3 align-top">
-                                        <p className="font-bold">{selectedTicket.showtime?.room?.cinema?.name}</p>
-                                        <p>{selectedTicket.showtime?.room?.name}</p>
-                                        <p>{format(new Date(selectedTicket.showtime?.startTime), "HH:mm - dd/MM/yyyy")}</p>
-                                    </td>
-                                    <td className="p-3 align-top text-right">
-                                        <p className="font-bold text-red-600 text-lg">
-                                            {selectedTicket.tickets?.map(t => t.seat?.name).join(", ") || "Ghế thường"}
-                                        </p>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div className="flex justify-between items-center mt-6 pt-4 border-t border-neutral-200">
-                         <span className="text-neutral-500 text-sm italic">Cảm ơn bạn đã sử dụng dịch vụ!</span>
-                         <div className="flex items-center gap-4">
-                            <span className="font-bold text-lg text-neutral-800">Tổng Cộng:</span>
-                            <span className="font-bold text-2xl text-red-600">{formatCurrency(selectedTicket.totalPrice)}</span>
-                         </div>
-                    </div>
-                </div>
+      {/* --- LIST --- */}
+      <div className="space-y-4">
+        {filteredData.length === 0 ? (
+            <div className="text-center py-12 bg-neutral-900/50 rounded-xl border border-dashed border-neutral-700">
+                <p className="text-neutral-500">Không tìm thấy vé nào trong mục này.</p>
             </div>
-        </div>
-      )}
+        ) : (
+            filteredData.map((booking) => {
+                const status = booking.status?.toLowerCase();
+                return (
+                    <div key={booking.id} className="bg-neutral-900 p-5 rounded-xl border border-neutral-700 hover:border-red-600 transition-all group">
+                        <div className="flex flex-col md:flex-row gap-4 justify-between">
+                            
+                            {/* Thông tin vé */}
+                            <div className="flex-1">
+                                <h3 className="text-lg font-bold text-white group-hover:text-red-500 transition-colors uppercase">
+                                    {booking.showtime?.movie?.title}
+                                </h3>
+                                <div className="text-sm text-neutral-400 mt-2 space-y-1">
+                                    <p className="flex items-center gap-2"><MapPin size={14} className="text-red-500"/> {booking.showtime?.room?.name}</p>
+                                    <p className="flex items-center gap-2"><Clock size={14} className="text-red-500"/> {formatDate(booking.showtime?.startTime)}</p>
+                                    <p className="flex items-center gap-2 text-white font-medium">
+                                        Ghế: {booking.bookingDetails?.map(d => d.seat?.seatCode || d.seat?.code).join(", ")}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Trạng thái & Hành động */}
+                            <div className="flex flex-col items-end justify-between gap-4">
+                                <div className="flex flex-col items-end">
+                                    <span className={`px-3 py-1 rounded text-xs font-bold uppercase tracking-wider mb-1
+                                        ${status === 'paid' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 
+                                          status === 'pending' || status === 'unpaid' ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' : 
+                                          'bg-neutral-700 text-neutral-400'}`}>
+                                        {status === 'paid' ? 'Đã thanh toán' : status === 'pending' || status === 'unpaid' ? 'Chờ thanh toán' : 'Đã hủy'}
+                                    </span>
+                                    <span className="text-xl font-bold text-white">{formatCurrency(booking.totalPrice)}</span>
+                                </div>
+
+                                {/* Nút hành động */}
+                                <div className="flex gap-2">
+                                    {(status === 'pending' || status === 'unpaid') && (
+                                        <button 
+                                            onClick={() => navigate(`/payment/${booking.id}`)}
+                                            className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-black px-4 py-2 rounded-lg font-bold text-sm transition-colors"
+                                        >
+                                            <CreditCard size={16}/> Thanh toán ngay
+                                        </button>
+                                    )}
+
+                                    {status === 'paid' && (
+                                        <button 
+                                            onClick={() => handleShowQR(booking)}
+                                            className="flex items-center gap-2 bg-neutral-800 hover:bg-neutral-700 border border-neutral-600 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors"
+                                        >
+                                            <QrCode size={16}/> Vé vào rạp
+                                        </button>
+                                    )}
+
+                                    {status === 'cancelled' && (
+                                        <span className="flex items-center gap-2 text-neutral-500 text-sm italic">
+                                            <XCircle size={16}/> Vé đã bị hủy
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })
+        )}
+      </div>
     </div>
   );
 };

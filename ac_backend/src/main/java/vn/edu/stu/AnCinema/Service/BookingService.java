@@ -14,6 +14,7 @@ import vn.edu.stu.AnCinema.enums.SeatType;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -84,6 +85,7 @@ public class BookingService {
                 .build();
 
         Bookings savedBooking = bookingsRepository.save(booking);
+        List<BookingDetails> detailsList = new ArrayList<>();
 
         for (Seats seat : selectedSeats) {
             BookingDetails detail = BookingDetails.builder()
@@ -92,8 +94,9 @@ public class BookingService {
                     .price(calculateTicketPrice(showtime, seat))
                     .build();
             bookingDetailRepository.save(detail);
+            detailsList.add(detail);
         }
-
+        savedBooking.setBookingDetails(detailsList);
         return savedBooking;
     }
 

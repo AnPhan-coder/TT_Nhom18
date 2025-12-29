@@ -14,6 +14,7 @@ import vn.edu.stu.AnCinema.dto.response.ShowtimeResponse;
 import vn.edu.stu.AnCinema.enums.MoviesStatus;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -108,7 +109,7 @@ public class ShowtimeService {
     }
 
     @Transactional
-    public String autoCreateShowtimes(ShowtimeRequest request) {
+    public List<Showtimes> autoCreateShowtimes(ShowtimeRequest request) {
         Movies movie = moviesRepository.findById(request.getMovieId())
                 .orElseThrow(() -> new RuntimeException("Phim không tồn tại"));
         Rooms room = roomRepository.findById(request.getRoomId())
@@ -117,12 +118,12 @@ public class ShowtimeService {
         LocalDateTime currentStart = request.getStartTime();
         LocalDateTime closingTime = currentStart.toLocalDate().atTime(23, 0);
 
+        List<Showtimes> createdShowtimes = new ArrayList<>();
         int count = 0;
-        int skipped = 0;
 
         while (currentStart.plusMinutes(movie.getDuration()).isBefore(closingTime)) {
 
-            LocalDateTime currentEnd = currentStart.plusMinutes(movie.getDuration() + 15); // +15p dọn
+            LocalDateTime currentEnd = currentStart.plusMinutes(movie.getDuration() + 15);
 
             List<Showtimes> overlaps = showtimesRepository.checkOverlap(request.getRoomId(), currentStart, currentEnd);
 
@@ -135,18 +136,20 @@ public class ShowtimeService {
                         .basePrice(request.getBasePrice())
                         .isActive(true)
                         .build();
-                showtimesRepository.save(showtime);
+
+                Showtimes saved = showtimesRepository.save(showtime);
+                createdShowtimes.add(saved);
                 count++;
-            } else {
-                skipped++;
             }
 
             currentStart = currentEnd;
         }
+
         if (count > 0) {
             checkAndUpdateMovieStatus(movie);
         }
-        return "Đã tự động tạo " + count + " suất chiếu. (Bỏ qua " + skipped + " suất do trùng lịch/ngoài giờ)";
+
+        return createdShowtimes;
     }
 
     void checkAndUpdateMovieStatus(Movies movie) {

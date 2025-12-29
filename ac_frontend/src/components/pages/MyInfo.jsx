@@ -3,14 +3,13 @@ import axiosClient from "../../api/axiosClient";
 import { toast } from "react-toastify";
 import { Save, Mail, User } from "lucide-react";
 
-const MyInfo = ({ user }) => {
+const MyInfo = ({ user, onUpdate }) => {
   const [loading, setLoading] = useState(false);
   const [isChangePassword, setIsChangePassword] = useState(false);
   
   const [formData, setFormData] = useState({
     id: user.id,
     name: user.name || "",
-    email: user.email || "", 
     password: "",
     confirmPassword: "",
   });
@@ -43,9 +42,9 @@ const MyInfo = ({ user }) => {
       await axiosClient.put(`/users/${formData.id}`, payload);
       
       toast.success("Cập nhật hồ sơ thành công!");
-      
-      const updatedUser = { ...user, name: formData.name };
-      localStorage.setItem("userInfo", JSON.stringify(updatedUser));
+      if (onUpdate) {
+        onUpdate({ name: formData.name }); 
+      }
       
       setIsChangePassword(false);
       setFormData(prev => ({ ...prev, password: "", confirmPassword: "" }));
@@ -56,7 +55,6 @@ const MyInfo = ({ user }) => {
       setLoading(false);
     }
   };
-
   return (
     <div>
       <h2 className="text-2xl font-bold text-yellow-500 mb-6 uppercase tracking-wider border-b border-neutral-700 pb-4">
@@ -64,16 +62,9 @@ const MyInfo = ({ user }) => {
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
-        <div>
-            <label className="block text-neutral-400 text-sm font-bold mb-2 flex items-center gap-2">
-                <Mail size={16}/> Email
-            </label>
-            <input type="email" value={formData.email} disabled 
-                className="w-full bg-neutral-900/50 border border-neutral-700 rounded-lg p-3 text-neutral-500 cursor-not-allowed" />
-        </div>
 
         <div>
-            <label className="block text-neutral-400 text-sm font-bold mb-2 flex items-center gap-2">
+            <label className="flex text-neutral-400 text-sm font-bold mb-2 items-center gap-2">
                 <User size={16}/> Họ và Tên
             </label>
             <input type="text" name="name" value={formData.name} onChange={handleChange}

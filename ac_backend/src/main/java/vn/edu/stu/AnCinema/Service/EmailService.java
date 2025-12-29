@@ -27,7 +27,6 @@ public class EmailService {
             message.setText(body);
 
             javaMailSender.send(message);
-            System.out.println("Gửi mail thành công đến: " + to);
 
         } catch (Exception e) {
             e.printStackTrace();

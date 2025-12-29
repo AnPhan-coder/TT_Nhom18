@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import axiosClient from "../../api/axiosClient";
 import CreatableSelect from "react-select/creatable";
-import { toast } from "react-toastify";
-import { Upload, Link as LinkIcon, Image as ImageIcon } from "lucide-react"; 
+import { Upload, Link as LinkIcon, Save, ArrowLeft } from "lucide-react";
+import { useApiCall } from "../../hooks/useApiCall";
 
 const MovieForm = ({ movieId, onBack }) => {
   const isEdit = !!movieId;
+  const { loading, execute } = useApiCall();
 
   const [formData, setFormData] = useState({
     title: "",
@@ -21,397 +22,358 @@ const MovieForm = ({ movieId, onBack }) => {
 
   const [genreOptions, setGenreOptions] = useState([]);
   const [actorOptions, setActorOptions] = useState([]);
-
-  const [posterMode, setPosterMode] = useState("URL"); 
-  const [uploading, setUploading] = useState(false);
-
+  const [posterMode, setPosterMode] = useState("URL");
   const [selectedGenres, setSelectedGenres] = useState([]);
   const [selectedActors, setSelectedActors] = useState([]);
-  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [resGenres, resActors] = await Promise.all([
-          axiosClient.get("/genres"),
-          axiosClient.get("/actors"),
-        ]);
-
-        const gOptions = resGenres.data.map((g) => ({
-          value: g.id,
-          label: g.name,
-        }));
-        const aOptions = resActors.data.map((a) => ({
-          value: a.id,
-          label: a.name,
-        }));
-
-        setGenreOptions(gOptions);
-        setActorOptions(aOptions);
-
-        if (isEdit) {
-          const resMovie = await axiosClient.get(`/movies/${movieId}`);
-          const m = resMovie.data.result;
-
-          setFormData({
-            title: m.title,
-            description: m.description,
-            duration: m.duration,
-            director: m.director,
-            trailerUrl: m.trailerUrl,
-            posterUrl: m.posterUrl,
-            status: m.status,
-            genreIds: m.genres.map((g) => g.id),
-            actorIds: m.actors.map((a) => a.id),
-          });
-
-          setSelectedGenres(
-            m.genres.map((g) => ({ value: g.id, label: g.name }))
+    const initData = async () => {
+      await execute(
+        async () => {
+          const [resGenres, resActors] = await Promise.all([
+            axiosClient.get("/genres"),
+            axiosClient.get("/actors"),
+          ]);
+          setGenreOptions(
+            resGenres.data.map((g) => ({ value: g.id, label: g.name }))
           );
-          setSelectedActors(
-            m.actors.map((a) => ({ value: a.id, label: a.name }))
+          setActorOptions(
+            resActors.data.map((a) => ({ value: a.id, label: a.name }))
           );
-        }
-      } catch (error) {
-        console.error("Lỗi tải dữ liệu:", error);
-      }
+
+          if (isEdit) {
+            const resMovie = await axiosClient.get(`/movies/${movieId}`);
+            const m = resMovie.data.result;
+            setFormData({
+              title: m.title,
+              description: m.description,
+              duration: m.duration,
+              director: m.director,
+              trailerUrl: m.trailerUrl,
+              posterUrl: m.posterUrl,
+              status: m.status,
+              genreIds: m.genres.map((g) => g.id),
+              actorIds: m.actors.map((a) => a.id),
+            });
+            setSelectedGenres(
+              m.genres.map((g) => ({ value: g.id, label: g.name }))
+            );
+            setSelectedActors(
+              m.actors.map((a) => ({ value: a.id, label: a.name }))
+            );
+          }
+        },
+        { showSuccessToast: false }
+      );
     };
-    fetchData();
+    initData();
   }, [movieId, isEdit]);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-  const handleCreateGenre = async (inputValue) => {
-    setLoading(true);
-    try {
-      const res = await axiosClient.post("/genres", {
-        name: inputValue,
-      });
-      const newGenre = res.data;
-      const newOption = { value: newGenre.id, label: newGenre.name };
-
-      setGenreOptions((prev) => [...prev, newOption]);
-      setSelectedGenres((prev) => [...prev, newOption]);
-      setFormData((prev) => ({
-        ...prev,
-        genreIds: [...prev.genreIds, newGenre.id],
-      }));
-
-      toast.success(`✨ Đã thêm thể loại mới: ${newGenre.name}`);
-    } catch (error) {
-      toast.error("Lỗi tạo thể loại");
-    } finally {
-      setLoading(false);
-    }
-  };
-  const handleCreateActor = async (inputValue) => {
-    setLoading(true);
-    try {
-     const res = await axiosClient.post("/actors", {
-        name: inputValue,
-      });
-      const newActor = res.data;
-      const newOption = { value: newActor.id, label: newActor.name };
-
-      setActorOptions((prev) => [...prev, newOption]);
-      setSelectedActors((prev) => [...prev, newOption]);
-      setFormData((prev) => ({
-        ...prev,
-        actorIds: [...prev.actorIds, newActor.id],
-      }));
-
-      toast.success(`✨ Đã thêm diễn viên mới: ${newActor.name}`);
-    } catch (error) {
-      toast.error("Lỗi tạo diễn viên");
-    } finally {
-      setLoading(false);
-    }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await execute(
+      async () => {
+        if (isEdit) await axiosClient.put(`/movies/${movieId}`, formData);
+        else await axiosClient.post("/movies", formData);
+      },
+      {
+        successMessage: isEdit
+          ? "Cập nhật phim thành công!"
+          : "Thêm phim mới thành công!",
+        onSuccess: onBack,
+      }
+    );
   };
 
-  const handleGenreChange = (selectedOptions) => {
-    setSelectedGenres(selectedOptions);
-    setFormData({
-      ...formData,
-      genreIds: selectedOptions ? selectedOptions.map((opt) => opt.value) : [],
-    });
-  };
-
-  const handleActorChange = (selectedOptions) => {
-    setSelectedActors(selectedOptions);
-    setFormData({
-      ...formData,
-      actorIds: selectedOptions ? selectedOptions.map((opt) => opt.value) : [],
-    });
-  };
-const handleFileUpload = async (e) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-        toast.error("Vui lòng chọn file ảnh (jpg, png...)");
-        return;
-    }
+    const form = new FormData();
+    form.append("file", file);
 
-    const formDataUpload = new FormData();
-    formDataUpload.append("file", file);
-
-    setUploading(true);
-    try {
-        const res = await axiosClient.post("/upload", formDataUpload, {
-            headers: { "Content-Type": "multipart/form-data" }
-        });
-        const imageUrl = res.result || res.data?.result;
-
-        if (imageUrl) {
-            setFormData(prev => ({ ...prev, posterUrl: imageUrl }));
-            toast.success("Đã tải ảnh lên thành công!");
-        } else {
-            console.log("Response upload:", res); 
-        }
-    } catch (error) {
-        console.error(error);
-        toast.error("Lỗi upload ảnh: " + (error.response?.data?.message || "Lỗi server"));
-    } finally {
-        setUploading(false);
-    }
-  };
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-        if (isEdit) {
-            await axiosClient.put(`/movies/${movieId}`, formData);
-            toast.success("Cập nhật phim thành công!");
-        } else {
-            await axiosClient.post("/movies", formData);
-            toast.success("Thêm phim mới thành công!");
-        }
-        onBack();
-    } catch (error) {
-      console.error(error);
-      toast.error("Lỗi lưu phim: " + (error.response?.data?.message || "Lỗi server"));
-    }
+    await execute(
+      () =>
+        axiosClient.post("/upload", form, {
+          headers: { "Content-Type": "multipart/form-data" },
+        }),
+      {
+        onSuccess: (res) => {
+          const url = res.result || res.data?.result;
+          setFormData((prev) => ({ ...prev, posterUrl: url }));
+        },
+        successMessage: "Upload ảnh thành công!",
+      }
+    );
   };
 
   const customStyles = {
-    control: (base) => ({
+    control: (base, state) => ({
       ...base,
       backgroundColor: "#171717",
-      borderColor: "#525252",
+      borderColor: state.isFocused ? "#DC2626" : "#404040",
       color: "white",
+      boxShadow: state.isFocused ? "0 0 0 1px #DC2626" : "none",
+      "&:hover": { borderColor: "#DC2626" },
     }),
     menu: (base) => ({
       ...base,
       backgroundColor: "#262626",
-      zIndex: 9999,
+      border: "1px solid #404040",
     }),
     option: (base, state) => ({
       ...base,
-      backgroundColor: state.isFocused ? "#EAB308" : "#262626",
-      color: state.isFocused ? "black" : "white",
+      backgroundColor: state.isFocused ? "#DC2626" : "#262626",
+      color: "white",
       cursor: "pointer",
     }),
-    multiValue: (base) => ({
-      ...base,
-      backgroundColor: "#404040",
-    }),
-    multiValueLabel: (base) => ({
-      ...base,
-      color: "white",
-    }),
-    input: (base) => ({
-      ...base,
-      color: "white",
-    }),
-    singleValue: (base) => ({
-      ...base,
-      color: "white",
-    }),
+    multiValue: (base) => ({ ...base, backgroundColor: "#404040" }),
+    multiValueLabel: (base) => ({ ...base, color: "white" }),
+    input: (base) => ({ ...base, color: "white" }),
+    singleValue: (base) => ({ ...base, color: "white" }),
   };
 
   return (
-    <div className="bg-neutral-800 p-8 rounded-lg border border-neutral-700 max-w-4xl mx-auto shadow-xl">
-      <h2 className="text-2xl font-bold text-yellow-500 mb-6">
-        {isEdit ? `Chỉnh Sửa Phim` : "Thêm Phim Mới"}
-      </h2>
+    <div className="bg-neutral-800 p-8 rounded-xl border border-neutral-700 max-w-5xl mx-auto shadow-2xl font-body">
+      <div className="flex items-center gap-4 mb-8 pb-4 border-b border-neutral-700">
+        <button
+          onClick={onBack}
+          className="p-2 rounded-full hover:bg-neutral-700 text-neutral-400 hover:text-white transition-colors"
+        >
+          <ArrowLeft size={20} />
+        </button>
+        <h2 className="text-2xl font-bold font-display text-white uppercase tracking-tight">
+          {isEdit ? `Chỉnh Sửa Phim` : "Thêm Phim Mới"}
+        </h2>
+      </div>
 
       <form
         onSubmit={handleSubmit}
-        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        className="grid grid-cols-1 md:grid-cols-12 gap-8"
       >
-        <div className="space-y-4">
+        <div className="md:col-span-8 space-y-6">
+          <div className="grid grid-cols-2 gap-6">
+            <div className="col-span-2">
+              <label className="text-neutral-400 text-sm font-bold mb-2 block">
+                Tên Phim
+              </label>
+              <input
+                name="title"
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
+                className="w-full bg-neutral-900 border border-neutral-600 p-3 rounded-lg text-white focus:border-red-500 outline-none transition-colors"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-neutral-400 text-sm font-bold mb-2 block">
+                Thời lượng (phút)
+              </label>
+              <input
+                type="number" min="60" max="200"
+                name="duration"
+                value={formData.duration}
+                onChange={(e) =>
+                  setFormData({ ...formData, duration: e.target.value })
+                }
+                className="w-full bg-neutral-900 border border-neutral-600 p-3 rounded-lg text-white focus:border-red-500 outline-none transition-colors"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-neutral-400 text-sm font-bold mb-2 block">
+                Đạo diễn
+              </label>
+              <input
+                name="director"
+                value={formData.director}
+                onChange={(e) =>
+                  setFormData({ ...formData, director: e.target.value })
+                }
+                className="w-full bg-neutral-900 border border-neutral-600 p-3 rounded-lg text-white focus:border-red-500 outline-none transition-colors"
+              />
+            </div>
+          </div>
+
           <div>
-            <label className="text-neutral-400 block mb-1">Tên Phim</label>
-            <input
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              className="w-full bg-neutral-900 border border-neutral-600 p-2 rounded text-white focus:border-yellow-500 outline-none"
-              required
+            <label className="text-neutral-400 text-sm font-bold mb-2 block">
+              Mô tả phim
+            </label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+              className="w-full bg-neutral-900 border border-neutral-600 p-3 rounded-lg text-white h-32 focus:border-red-500 outline-none transition-colors"
             />
           </div>
+
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <label className="text-neutral-400 text-sm font-bold mb-2 block">
+                Thể loại
+              </label>
+              <CreatableSelect
+                isMulti
+                options={genreOptions}
+                value={selectedGenres}
+                onChange={(opt) => {
+                  setSelectedGenres(opt);
+                  setFormData({
+                    ...formData,
+                    genreIds: opt ? opt.map((o) => o.value) : [],
+                  });
+                }}
+                styles={customStyles}
+                placeholder="Chọn thể loại..."
+                isDisabled={loading}
+              />
+            </div>
+            <div>
+              <label className="text-neutral-400 text-sm font-bold mb-2 block">
+                Diễn viên
+              </label>
+              <CreatableSelect
+                isMulti
+                options={actorOptions}
+                value={selectedActors}
+                onChange={(opt) => {
+                  setSelectedActors(opt);
+                  setFormData({
+                    ...formData,
+                    actorIds: opt ? opt.map((o) => o.value) : [],
+                  });
+                }}
+                styles={customStyles}
+                placeholder="Chọn diễn viên..."
+                isDisabled={loading}
+              />
+            </div>
+          </div>
+
           <div>
-            <label className="text-neutral-400 block mb-1">
-              Thời lượng (phút)
+            <label className="text-neutral-400 text-sm font-bold mb-2 block">
+              Link Trailer
             </label>
             <input
-              type="number"
-              name="duration"
-              value={formData.duration}
-              onChange={handleChange}
-              className="w-full bg-neutral-900 border border-neutral-600 p-2 rounded text-white focus:border-yellow-500 outline-none"
-              required
+              name="trailerUrl"
+              value={formData.trailerUrl}
+              onChange={(e) =>
+                setFormData({ ...formData, trailerUrl: e.target.value })
+              }
+              className="w-full bg-neutral-900 border border-neutral-600 p-3 rounded-lg text-white focus:border-red-500 outline-none transition-colors"
+              placeholder="https://youtube.com/..."
             />
           </div>
+        </div>
+
+        <div className="md:col-span-4 space-y-6">
           <div>
-            <label className="text-neutral-400 block mb-1">Đạo diễn</label>
-            <input
-              name="director"
-              value={formData.director}
-              onChange={handleChange}
-              className="w-full bg-neutral-900 border border-neutral-600 p-2 rounded text-white focus:border-yellow-500 outline-none"
-            />
-          </div>
-          <div>
-            <label className="text-neutral-400 block mb-1">Trạng thái</label>
+            <label className="text-neutral-400 text-sm font-bold mb-2 block">
+              Trạng thái
+            </label>
             <select
               name="status"
               value={formData.status}
-              onChange={handleChange}
-              className="w-full bg-neutral-900 border border-neutral-600 p-2 rounded text-white focus:border-yellow-500 outline-none"
+              onChange={(e) =>
+                setFormData({ ...formData, status: e.target.value })
+              }
+              className="w-full bg-neutral-900 border border-neutral-600 p-3 rounded-lg text-white focus:border-red-500 outline-none transition-colors"
             >
               <option value="upcoming">Sắp Chiếu</option>
               <option value="active">Đang Chiếu</option>
               <option value="finished">Ngừng Chiếu</option>
             </select>
           </div>
-        </div>
 
-        <div className="space-y-4">
-          
           <div>
-            <label className="text-neutral-400 block mb-1">Poster Phim</label>
-            
-            <div className="flex gap-2 mb-2 text-sm">
-                <button 
-                    type="button"
-                    onClick={() => setPosterMode("URL")}
-                    className={`flex items-center gap-1 px-3 py-1 rounded ${posterMode === 'URL' ? 'bg-yellow-500 text-black font-bold' : 'bg-neutral-700 text-neutral-400'}`}
-                >
-                    <LinkIcon size={14}/> Link URL
-                </button>
-                <button 
-                    type="button"
-                    onClick={() => setPosterMode("FILE")}
-                    className={`flex items-center gap-1 px-3 py-1 rounded ${posterMode === 'FILE' ? 'bg-yellow-500 text-black font-bold' : 'bg-neutral-700 text-neutral-400'}`}
-                >
-                    <Upload size={14}/> Tải ảnh lên
-                </button>
+            <label className="text-neutral-400 text-sm font-bold mb-2 block">
+              Poster Phim
+            </label>
+            <div className="flex gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => setPosterMode("URL")}
+                className={`flex-1 flex justify-center items-center gap-1 py-1.5 rounded text-xs font-bold ${
+                  posterMode === "URL"
+                    ? "bg-red-600 text-white"
+                    : "bg-neutral-700 text-neutral-400"
+                }`}
+              >
+                <LinkIcon size={12} /> Link
+              </button>
+              <button
+                type="button"
+                onClick={() => setPosterMode("FILE")}
+                className={`flex-1 flex justify-center items-center gap-1 py-1.5 rounded text-xs font-bold ${
+                  posterMode === "FILE"
+                    ? "bg-red-600 text-white"
+                    : "bg-neutral-700 text-neutral-400"
+                }`}
+              >
+                <Upload size={12} /> Upload
+              </button>
             </div>
 
             {posterMode === "URL" ? (
-                <input
-                  name="posterUrl"
-                  value={formData.posterUrl}
-                  onChange={handleChange}
-                  className="w-full bg-neutral-900 border border-neutral-600 p-2 rounded text-white focus:border-yellow-500 outline-none"
-                  placeholder="https://..."
-                />
+              <input
+                name="posterUrl"
+                value={formData.posterUrl}
+                onChange={(e) =>
+                  setFormData({ ...formData, posterUrl: e.target.value })
+                }
+                className="w-full bg-neutral-900 border border-neutral-600 p-3 rounded-lg text-white focus:border-red-500 outline-none text-sm"
+                placeholder="https://..."
+              />
             ) : (
-                <div className="border border-dashed border-neutral-600 rounded p-4 text-center hover:bg-neutral-900 transition-colors relative">
-                    <input 
-                        type="file" 
-                        accept="image/*"
-                        onChange={handleFileUpload}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        disabled={uploading}
-                    />
-                    <div className="flex flex-col items-center text-neutral-400">
-                        {uploading ? (
-                            <span>Đang tải lên...</span>
-                        ) : (
-                            <>
-                                <Upload size={24} className="mb-2"/>
-                                <span className="text-sm">Chọn ảnh từ máy</span>
-                            </>
-                        )}
-                    </div>
-                </div>
+              <div className="border border-dashed border-neutral-600 rounded-lg p-6 text-center hover:bg-neutral-700/30 transition-colors relative cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  disabled={loading}
+                />
+                <Upload size={24} className="mx-auto text-neutral-500 mb-2" />
+                <span className="text-xs text-neutral-400">
+                  Click để tải ảnh lên
+                </span>
+              </div>
             )}
 
-            {formData.posterUrl && (
-                <div className="mt-2 relative group w-24 h-36 border border-neutral-700 rounded overflow-hidden">
-                    <img src={formData.posterUrl} alt="Preview" className="w-full h-full object-cover"/>
+            <div className="mt-4 aspect-2/3 w-full bg-neutral-900 rounded-lg border border-neutral-700 overflow-hidden relative">
+              {formData.posterUrl ? (
+                <img
+                  src={formData.posterUrl}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-neutral-600 text-xs">
+                  No Preview
                 </div>
-            )}
-          </div>
-          <div>
-            <label className="text-neutral-400 block mb-1">Link Trailer</label>
-            <input
-              name="trailerUrl"
-              value={formData.trailerUrl}
-              onChange={handleChange}
-              className="w-full bg-neutral-900 border border-neutral-600 p-2 rounded text-white focus:border-yellow-500 outline-none"
-              placeholder="https://..."
-            />
-          </div>
-
-          <div>
-            <label className="text-neutral-400 block mb-1">
-              Thể loại
-            </label>
-            <CreatableSelect
-              isMulti
-              options={genreOptions}
-              value={selectedGenres}
-              onChange={handleGenreChange}
-              onCreateOption={handleCreateGenre}
-              styles={customStyles}
-              placeholder="Chọn hoặc gõ tên thể loại mới..."
-              formatCreateLabel={(inputValue) => `Tạo mới: "${inputValue}"`}
-              isDisabled={loading}
-            />
-          </div>
-          <div>
-            <label className="text-neutral-400 block mb-1">
-              Diễn viên
-            </label>
-            <CreatableSelect
-              isMulti
-              options={actorOptions}
-              value={selectedActors}
-              onChange={handleActorChange}
-              onCreateOption={handleCreateActor} 
-              styles={customStyles}
-              placeholder="Chọn hoặc gõ tên diễn viên mới..."
-              formatCreateLabel={(inputValue) => `Tạo mới: "${inputValue}"`}
-              isDisabled={loading}
-            />
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="md:col-span-2">
-          <label className="text-neutral-400 block mb-1">Mô tả phim</label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            className="w-full bg-neutral-900 border border-neutral-600 p-2 rounded text-white h-32 focus:border-yellow-500 outline-none"
-          ></textarea>
-        </div>
-
-        <div className="md:col-span-2 flex gap-4 mt-4">
+        <div className="md:col-span-12 pt-6 border-t border-neutral-700 flex justify-end gap-4">
           <button
             type="button"
             onClick={onBack}
-            className="px-6 py-2 bg-neutral-600 text-white rounded hover:bg-neutral-500 font-bold transition-colors"
+            className="px-6 py-3 bg-neutral-700 text-white rounded-lg font-bold hover:bg-neutral-600 transition-colors"
           >
-            Hủy
+            Hủy Bỏ
           </button>
           <button
             type="submit"
-            className="px-6 py-2 bg-yellow-500 text-neutral-900 rounded hover:bg-yellow-400 font-bold flex-1 transition-colors"
+            disabled={loading}
+            className="px-8 py-3 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-900/20 flex items-center gap-2"
           >
-            {isEdit ? "Lưu Thay Đổi" : "Tạo Phim Mới"}
+            <Save size={18} /> {loading ? "Đang xử lý..." : "Lưu Thông Tin"}
           </button>
         </div>
       </form>
