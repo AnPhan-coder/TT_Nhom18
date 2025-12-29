@@ -1,8 +1,7 @@
 # TT_Nhom18
 
 # ANCINEMA - Hệ thống Đặt vé Xem phim Online
-
-[alt text](image.png)
+(![alt text](image.png))
 
 ## 📝 Giới thiệu
 
