@@ -12,10 +12,14 @@ import vn.edu.stu.AnCinema.dto.response.SeatResponse;
 import vn.edu.stu.AnCinema.enums.BookingStatus;
 import vn.edu.stu.AnCinema.enums.SeatType;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -134,47 +138,112 @@ public class BookingService {
     }
 
     void sendTicketEmail(Bookings booking) {
-        String userEmail = booking.getUser().getEmail();
-        String movieTitle = booking.getShowtime().getMovie().getTitle();
-        String roomName = booking.getShowtime().getRoom().getName();
+        try {
+            String userEmail = booking.getUser().getEmail();
+            String movieTitle = booking.getShowtime().getMovie().getTitle();
+            String roomName = booking.getShowtime().getRoom().getName();
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm - dd/MM/yyyy");
-        String showTime = booking.getShowtime().getStartTime().format(formatter);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm - dd/MM/yyyy");
+            String showTime = booking.getShowtime().getStartTime().format(formatter);
 
-        String seatCodes = booking.getBookingDetails().stream()
-                .map(detail -> detail.getSeat().getSeatCode())
-                .collect(Collectors.joining(", "));
+            String seatCodes = booking.getBookingDetails().stream()
+                    .map(detail -> detail.getSeat().getSeatCode())
+                    .collect(Collectors.joining(", "));
 
-        String subject = "Vé điện tử: " + movieTitle + " - " + seatCodes;
+            Locale localeVN = new Locale("vi", "VN");
+            NumberFormat currencyVN = NumberFormat.getCurrencyInstance(localeVN);
+            String formattedPrice = currencyVN.format(booking.getTotalPrice());
 
-        String content = String.format("""
-                        Xin chào %s,
-                        
-                        Cảm ơn bạn đã đặt vé tại AnCinema! Dưới đây là thông tin vé của bạn:
-                        
-                        -----------------------------------------
-                        PHIM: %s
-                        RẠP: %s (%s)
-                        SUẤT CHIẾU: %s
-                        GHẾ: %s
-                        TỔNG TIỀN: %,.0f VND
-                        -----------------------------------------
-                        
-                        Vui lòng đưa email này cho nhân viên soát vé khi đến rạp.
-                        Chúc bạn xem phim vui vẻ!
-                        
-                        Trân trọng,
-                        AnCinema Team
-                        """,
-                booking.getUser().getName(),
-                movieTitle,
-                roomName,
-                showTime,
-                seatCodes,
-                booking.getTotalPrice()
-        );
+            String qrContent = String.format("Mã Vé: %d | Phim: %s | Rạp: %s | Ghế: %s | Suất: %s",
+                    booking.getId(), movieTitle, roomName, seatCodes, showTime);
 
-        emailService.sendEmail(userEmail, subject, content);
+            String encodedQrContent = URLEncoder.encode(qrContent, StandardCharsets.UTF_8);
+            String qrImageUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodedQrContent;
+
+            String subject = "🎟️ Vé điện tử AnCinema: " + movieTitle;
+
+            String content = String.format("""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+                        .email-container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+                        .header { background-color: #d32f2f; color: white; padding: 25px; text-align: center; }
+                        .header h2 { margin: 0; font-size: 24px; letter-spacing: 1px; }
+                        .content { padding: 30px; color: #333333; }
+                        .movie-title { font-size: 22px; font-weight: bold; color: #d32f2f; margin-bottom: 5px; }
+                        .cinema-name { font-size: 16px; color: #666; margin-bottom: 20px; }
+                        .info-table { width: 100%%; border-collapse: collapse; margin-top: 10px; }
+                        .info-table td { padding: 12px 5px; border-bottom: 1px dashed #ddd; vertical-align: top; }
+                        .label { font-weight: bold; color: #555; width: 100px; }
+                        .value { font-weight: bold; color: #000; font-size: 15px; }
+                        .qr-section { text-align: center; margin-top: 25px; padding-top: 20px; border-top: 2px solid #f0f0f0; }
+                        .qr-img { border: 5px solid #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+                        .footer { background-color: #333; color: #aaa; text-align: center; padding: 15px; font-size: 12px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="email-container">
+                        <div class="header">
+                            <h2>VÉ ĐIỆN TỬ ANCINEMA</h2>
+                        </div>
+                        <div class="content">
+                            <p>Xin chào <strong>%s</strong>,</p>
+                            <p>Cảm ơn bạn đã đặt vé. Đây là vé vào cửa của bạn:</p>
+                            
+                            <div class="movie-title">%s</div>
+                            <div class="cinema-name">%s</div>
+                            
+                            <table class="info-table">
+                                <tr>
+                                    <td class="label">Mã vé:</td>
+                                    <td class="value">#%d</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Suất chiếu:</td>
+                                    <td class="value">%s</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Ghế:</td>
+                                    <td class="value" style="color: #d32f2f;">%s</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Tổng tiền:</td>
+                                    <td class="value">%s</td>
+                                </tr>
+                            </table>
+
+                            <div class="qr-section">
+                                <p style="margin-bottom: 10px; font-size: 14px; color: #777;">Quét mã này tại quầy soát vé</p>
+                                <img src="%s" alt="QR Code" width="180" height="180" class="qr-img" />
+                            </div>
+                        </div>
+                        <div class="footer">
+                            Vui lòng đến trước giờ chiếu 15 phút.<br>
+                            Chúc bạn xem phim vui vẻ!<br>
+                            AnCinema Team
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """,
+                    booking.getUser().getName(),
+                    movieTitle,
+                    roomName,
+                    booking.getId(),
+                    showTime,
+                    seatCodes,
+                    formattedPrice,
+                    qrImageUrl
+            );
+
+            emailService.sendEmail(userEmail, subject, content);
+
+        } catch (Exception e) {
+            System.err.println("Lỗi tạo nội dung email: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Transactional

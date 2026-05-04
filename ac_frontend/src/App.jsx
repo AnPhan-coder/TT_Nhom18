@@ -14,10 +14,10 @@ import RegisterPage from './components/pages/RegisterPage';
 import ForgotPasswordPage from './components/pages/ForgotPasswordPage';
 import AdminRoute from './components/pages/AdminRoute';
 import AdminDashboard from './components/pages/AdminDashboard';
-import PaymentPage from './components/pages/PaymentPage';
 import ManageUsers from './components/pages/ManageUsers';
 import UserProfile from './components/pages/UserProfileMain';
 import PaymentReturn from './components/pages/PaymentReturn';
+import PaymentPage from './components/pages/PaymentPage';
 
 import Header from './components/Header/Header';
 import Footer from './components/Footer/Footer';

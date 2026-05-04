@@ -139,12 +139,6 @@ const MovieDetail = () => {
                 <Clock size={14} className="text-red-500" /> {movie.duration}{" "}
                 phút
               </span>
-              <span className="flex items-center gap-1 bg-neutral-800 px-3 py-1 rounded border border-neutral-700">
-                <Calendar size={14} className="text-red-500" />{" "}
-                {movie.releaseDate
-                  ? format(new Date(movie.releaseDate), "dd/MM/yyyy")
-                  : "N/A"}
-              </span>
             </div>
 
             <div className="flex flex-wrap gap-2 justify-center md:justify-start">
